@@ -45,10 +45,9 @@ export function BattlePage({
   const isSubmitted = self?.submitted ?? false
   const status = roomState?.status ?? 'waiting'
   const [selectedAction, setSelectedAction] = useState<'attack' | 'defend' | 'rest' | null>(null)
-
-  const latestResult =
-    roundResult && roomState && roundResult.round <= roomState.round ? roundResult : null
-  const isPlayerOne = playerSide === 'p1'
+  const [pendingReveal, setPendingReveal] = useState<RoundResult | null>(null)
+  const [revealedResult, setRevealedResult] = useState<RoundResult | null>(null)
+  const [isRevealOpen, setIsRevealOpen] = useState(false)
 
   const displayPlayerName = self?.name || 'Unknown'
   const displayPlayerId = playerId || 'pending'
@@ -56,6 +55,36 @@ export function BattlePage({
   const displayOpponentId = opponent?.playerId || opponentId || 'pending'
   const playerHp = self?.hp ?? 10
   const opponentHp = opponent?.hp ?? 10
+
+  useEffect(() => {
+    if (!roundResult) {
+      return
+    }
+    if (revealedResult?.round === roundResult.round) {
+      return
+    }
+    setPendingReveal(roundResult)
+    setIsRevealOpen(true)
+  }, [roundResult, revealedResult?.round])
+
+  const latestResult =
+    revealedResult && roomState && revealedResult.round <= roomState.round ? revealedResult : null
+  const isPlayerOne = playerSide ? playerSide === 'p1' : true
+  const formatAction = (action: 'attack' | 'defend' | 'rest') =>
+    action.charAt(0).toUpperCase() + action.slice(1)
+
+  const youResult = latestResult
+    ? isPlayerOne
+      ? latestResult.p1
+      : latestResult.p2
+    : null
+  const opponentResult = latestResult
+    ? isPlayerOne
+      ? latestResult.p2
+      : latestResult.p1
+    : null
+  const youBeforeHp = youResult ? youResult.hp - youResult.delta : playerHp
+  const opponentBeforeHp = opponentResult ? opponentResult.hp - opponentResult.delta : opponentHp
 
   const clampHp = (value: number) => Math.max(0, Math.min(10, value))
   const playerHpPercent = `${(clampHp(playerHp) / 10) * 100}%`
@@ -71,6 +100,15 @@ export function BattlePage({
     }
     setSelectedAction(action)
     onPlayAction(action)
+  }
+
+  const handleConfirmReveal = () => {
+    if (!pendingReveal) {
+      return
+    }
+    setRevealedResult(pendingReveal)
+    setIsRevealOpen(false)
+    setPendingReveal(null)
   }
 
   return (
@@ -145,31 +183,84 @@ export function BattlePage({
           ) : null}
         </div>
         <div className="battle__status-panel battle__status-panel--result">
-          <h3 className="battle__status-title">Latest Result</h3>
-          {latestResult ? (
-            <div className="battle__status-list">
-              <div className="battle__status-row">
-                <span>You</span>
-                <span>
-                  {(isPlayerOne ? latestResult.p1.action : latestResult.p2.action)} •{' '}
-                  {(isPlayerOne ? latestResult.p1.delta : latestResult.p2.delta) > 0 ? '+' : ''}
-                  {isPlayerOne ? latestResult.p1.delta : latestResult.p2.delta}
-                </span>
+          <h3 className="battle__status-title">
+            {latestResult ? `Round ${latestResult.round} Reveal` : 'Latest Result'}
+          </h3>
+          {latestResult && youResult && opponentResult ? (
+            <>
+              <div className="battle__reveal">
+                <div className="battle__reveal-side">
+                  <p className="battle__reveal-label">You</p>
+                  <p className="battle__reveal-name">{displayPlayerName}</p>
+                  <span className="battle__reveal-card">{formatAction(youResult.action)}</span>
+                  <p className="battle__reveal-delta">
+                    ΔHP {youResult.delta > 0 ? '+' : ''}
+                    {youResult.delta}
+                  </p>
+                  <p className="battle__reveal-hp">
+                    HP {youBeforeHp} → {youResult.hp}
+                  </p>
+                </div>
+                <div className="battle__reveal-vs">VS</div>
+                <div className="battle__reveal-side">
+                  <p className="battle__reveal-label">Opponent</p>
+                  <p className="battle__reveal-name">{displayOpponentName}</p>
+                  <span className="battle__reveal-card">{formatAction(opponentResult.action)}</span>
+                  <p className="battle__reveal-delta">
+                    ΔHP {opponentResult.delta > 0 ? '+' : ''}
+                    {opponentResult.delta}
+                  </p>
+                  <p className="battle__reveal-hp">
+                    HP {opponentBeforeHp} → {opponentResult.hp}
+                  </p>
+                </div>
               </div>
-              <div className="battle__status-row">
-                <span>Opponent</span>
-                <span>
-                  {(isPlayerOne ? latestResult.p2.action : latestResult.p1.action)} •{' '}
-                  {(isPlayerOne ? latestResult.p2.delta : latestResult.p1.delta) > 0 ? '+' : ''}
-                  {isPlayerOne ? latestResult.p2.delta : latestResult.p1.delta}
-                </span>
-              </div>
-            </div>
+              <p className="battle__status-text">
+                Net: You {youResult.delta > 0 ? '+' : ''}
+                {youResult.delta}, Opponent {opponentResult.delta > 0 ? '+' : ''}
+                {opponentResult.delta}
+              </p>
+            </>
           ) : (
             <p className="battle__status-text">Results will appear after both players act.</p>
           )}
         </div>
       </section>
+      {isRevealOpen && pendingReveal ? (
+        <div className="battle__reveal-overlay">
+          <div className="battle__reveal-modal">
+            <h3 className="battle__reveal-title">Round {pendingReveal.round} Reveal</h3>
+            <div className="battle__reveal-grid">
+              <div className="battle__reveal-side">
+                <p className="battle__reveal-label">You</p>
+                <p className="battle__reveal-name">{displayPlayerName}</p>
+                <span className="battle__reveal-card">
+                  {formatAction(isPlayerOne ? pendingReveal.p1.action : pendingReveal.p2.action)}
+                </span>
+                <p className="battle__reveal-delta">
+                  ΔHP {(isPlayerOne ? pendingReveal.p1.delta : pendingReveal.p2.delta) > 0 ? '+' : ''}
+                  {isPlayerOne ? pendingReveal.p1.delta : pendingReveal.p2.delta}
+                </p>
+              </div>
+              <div className="battle__reveal-vs">VS</div>
+              <div className="battle__reveal-side">
+                <p className="battle__reveal-label">Opponent</p>
+                <p className="battle__reveal-name">{displayOpponentName}</p>
+                <span className="battle__reveal-card">
+                  {formatAction(isPlayerOne ? pendingReveal.p2.action : pendingReveal.p1.action)}
+                </span>
+                <p className="battle__reveal-delta">
+                  ΔHP {(isPlayerOne ? pendingReveal.p2.delta : pendingReveal.p1.delta) > 0 ? '+' : ''}
+                  {isPlayerOne ? pendingReveal.p2.delta : pendingReveal.p1.delta}
+                </p>
+              </div>
+            </div>
+            <button className="battle__reveal-confirm" onClick={handleConfirmReveal}>
+              Confirm
+            </button>
+          </div>
+        </div>
+      ) : null}
     </section>
   )
 }
