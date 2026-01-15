@@ -238,9 +238,10 @@ function App() {
       return existing
     }
 
+    const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const wsUrl = import.meta.env.DEV
       ? `ws://${window.location.host}/ws`
-      : window.location.origin.replace(/^http/, 'ws')
+      : `${wsProto}://${window.location.host}/ws`
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
