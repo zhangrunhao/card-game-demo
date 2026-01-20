@@ -229,9 +229,10 @@ function MyApp() {
     }
 
     const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    const wsPath = '/api/20250120_card-game01/ws'
     const wsUrl = import.meta.env.DEV
-      ? `ws://${window.location.host}/ws`
-      : `${wsProto}://${window.location.host}/ws`
+      ? `ws://${window.location.host}${wsPath}`
+      : `${wsProto}://${window.location.host}${wsPath}`
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 

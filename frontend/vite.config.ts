@@ -10,10 +10,6 @@ const sharedConfig = defineConfig({
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-      '/ws': {
-        target: 'ws://localhost:3001',
         ws: true,
       },
     },
