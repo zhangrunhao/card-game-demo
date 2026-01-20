@@ -6,7 +6,7 @@ import { EntryPage } from './pages/entry-page'
 import { MatchPage } from './pages/match-page'
 import { ResultPage } from './pages/result-page'
 import { createTranslator, getPreferredLanguage, languageStorageKey, type Language } from './i18n'
-import type { GameOver, RoomState, RoundResult } from './src/types'
+import type { GameOver, RoomState, RoundResult } from './types'
 
 type Theme = 'light' | 'dark'
 
