@@ -52,7 +52,7 @@ export const createProjectConfig = ({
   return defineConfig(({ command }) =>
     mergeConfig(sharedConfig, {
       root: projectRoot,
-      base: command === 'build' ? '../' : '/',
+      base: command === 'build' ? `/${projectName}/` : '/',
       appType: isMultiPage ? 'mpa' : 'spa',
       plugins: [
         {
