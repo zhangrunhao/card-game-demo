@@ -1,52 +1,54 @@
 import { useState } from 'react'
+import type { MessageKey, Translator } from '../i18n'
 
 type CreateRoomPageProps = {
+  t: Translator
   onCreate: (payload: { playerName: string }) => void
   onBack: () => void
 }
 
-export function CreateRoomPage({ onCreate, onBack }: CreateRoomPageProps) {
+export function CreateRoomPage({ t, onCreate, onBack }: CreateRoomPageProps) {
   const [playerName, setPlayerName] = useState('')
-  const [error, setError] = useState('')
+  const [errorKey, setErrorKey] = useState<MessageKey | null>(null)
 
   const handleCreate = () => {
     const trimmedName = playerName.trim()
     if (!trimmedName) {
-      setError('Player name is required.')
+      setErrorKey('create.error.name_required')
       return
     }
 
-    setError('')
+    setErrorKey(null)
     onCreate({ playerName: trimmedName })
   }
 
   return (
     <section className="entry">
       <header className="entry__header">
-        <p className="entry__eyebrow">Create Room</p>
-        <h1 className="entry__title">Start a New Match</h1>
-        <p className="entry__subtitle">Enter your name to generate a room.</p>
+        <p className="entry__eyebrow">{t('create.eyebrow')}</p>
+        <h1 className="entry__title">{t('create.title')}</h1>
+        <p className="entry__subtitle">{t('create.subtitle')}</p>
       </header>
 
       <div className="entry__form">
         <label className="entry__field">
-          <span className="entry__label">Player Name</span>
+          <span className="entry__label">{t('create.player_name')}</span>
           <input
-            className={`entry__input ${error && !playerName.trim() ? 'entry__input--error' : ''}`}
-            placeholder="e.g. Alex"
+            className={`entry__input ${errorKey ? 'entry__input--error' : ''}`}
+            placeholder={t('create.player_placeholder')}
             value={playerName}
             onChange={(event) => setPlayerName(event.target.value)}
           />
         </label>
 
-        {error ? <p className="entry__error">{error}</p> : null}
+        {errorKey ? <p className="entry__error">{t(errorKey)}</p> : null}
 
         <div className="entry__actions">
           <button className="entry__button entry__button--ghost" onClick={onBack}>
-            Back to Lobby
+            {t('create.back')}
           </button>
           <button className="entry__button" onClick={handleCreate}>
-            Create Room
+            {t('create.confirm')}
           </button>
         </div>
       </div>

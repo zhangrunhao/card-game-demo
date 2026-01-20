@@ -1,35 +1,37 @@
 import { useState } from 'react'
+import type { MessageKey, Translator } from '../i18n'
 
 type EntryPageProps = {
+  t: Translator
   onJoin: (payload: { roomId: string; playerName: string }) => void
   onCreate: () => void
 }
 
-export function EntryPage({ onJoin, onCreate }: EntryPageProps) {
+export function EntryPage({ t, onJoin, onCreate }: EntryPageProps) {
   const [roomId, setRoomId] = useState('')
   const [playerName, setPlayerName] = useState('')
-  const [error, setError] = useState('')
+  const [errorKey, setErrorKey] = useState<MessageKey | null>(null)
 
   const validate = () => {
     const trimmedRoomId = roomId.trim()
     const trimmedName = playerName.trim()
 
     if (!trimmedRoomId) {
-      setError('Room ID is required.')
+      setErrorKey('entry.error.room_required')
       return false
     }
 
     if (!/^\d+$/.test(trimmedRoomId)) {
-      setError('Room ID must be numeric.')
+      setErrorKey('entry.error.room_numeric')
       return false
     }
 
     if (!trimmedName) {
-      setError('Player name is required.')
+      setErrorKey('entry.error.name_required')
       return false
     }
 
-    setError('')
+    setErrorKey(null)
     return true
   }
 
@@ -44,22 +46,24 @@ export function EntryPage({ onJoin, onCreate }: EntryPageProps) {
     })
   }
 
+  const hasRoomError =
+    errorKey === 'entry.error.room_required' || errorKey === 'entry.error.room_numeric'
+  const hasNameError = errorKey === 'entry.error.name_required'
+
   return (
     <section className="entry">
       <header className="entry__header">
-        <p className="entry__eyebrow">Card Duel Lobby</p>
-        <h1 className="entry__title">Create or Join a Room</h1>
-        <p className="entry__subtitle">
-          Enter a room ID and your name to get ready for a match.
-        </p>
+        <p className="entry__eyebrow">{t('entry.eyebrow')}</p>
+        <h1 className="entry__title">{t('entry.title')}</h1>
+        <p className="entry__subtitle">{t('entry.subtitle')}</p>
       </header>
 
       <div className="entry__form">
         <label className="entry__field">
-          <span className="entry__label">Room ID</span>
+          <span className="entry__label">{t('entry.room_id')}</span>
           <input
-            className={`entry__input ${error && !roomId.trim() ? 'entry__input--error' : ''}`}
-            placeholder="e.g. 1001"
+            className={`entry__input ${hasRoomError ? 'entry__input--error' : ''}`}
+            placeholder={t('entry.room_placeholder')}
             value={roomId}
             inputMode="numeric"
             pattern="[0-9]*"
@@ -68,23 +72,23 @@ export function EntryPage({ onJoin, onCreate }: EntryPageProps) {
         </label>
 
         <label className="entry__field">
-          <span className="entry__label">Player Name</span>
+          <span className="entry__label">{t('entry.player_name')}</span>
           <input
-            className={`entry__input ${error && !playerName.trim() ? 'entry__input--error' : ''}`}
-            placeholder="e.g. Alex"
+            className={`entry__input ${hasNameError ? 'entry__input--error' : ''}`}
+            placeholder={t('entry.player_placeholder')}
             value={playerName}
             onChange={(event) => setPlayerName(event.target.value)}
           />
         </label>
 
-        {error ? <p className="entry__error">{error}</p> : null}
+        {errorKey ? <p className="entry__error">{t(errorKey)}</p> : null}
 
         <div className="entry__actions">
           <button className="entry__button entry__button--ghost" onClick={onCreate}>
-            Create Room
+            {t('entry.create')}
           </button>
           <button className="entry__button" onClick={handleJoin}>
-            Join Room
+            {t('entry.join')}
           </button>
         </div>
       </div>

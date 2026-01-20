@@ -1,25 +1,15 @@
 import { useEffect, useState } from 'react'
+import type { Translator } from '../i18n'
 import type { RoomState, RoundResult } from '../types'
 
-const actionCards = [
-  {
-    id: 'attack',
-    title: 'Attack',
-    description: 'Strike hard to pressure your opponent.',
-  },
-  {
-    id: 'defend',
-    title: 'Defend',
-    description: 'Brace yourself and reduce losses.',
-  },
-  {
-    id: 'rest',
-    title: 'Rest',
-    description: 'Recover and prepare for the next exchange.',
-  },
-]
+const actionKeyMap = {
+  attack: 'action.attack',
+  defend: 'action.defend',
+  rest: 'action.rest',
+} as const
 
 type BattlePageProps = {
+  t: Translator
   playerId: string
   opponentId: string
   roomState: RoomState | null
@@ -30,6 +20,7 @@ type BattlePageProps = {
 }
 
 export function BattlePage({
+  t,
   playerId,
   opponentId,
   roomState,
@@ -49,10 +40,28 @@ export function BattlePage({
   const [revealedResult, setRevealedResult] = useState<RoundResult | null>(null)
   const [isRevealOpen, setIsRevealOpen] = useState(false)
 
-  const displayPlayerName = self?.name || 'Unknown'
-  const displayPlayerId = playerId || 'pending'
-  const displayOpponentName = opponent?.name || 'Unknown'
-  const displayOpponentId = opponent?.playerId || opponentId || 'pending'
+  const actionCards = [
+    {
+      id: 'attack',
+      title: t('action.attack'),
+      description: t('action.attack_desc'),
+    },
+    {
+      id: 'defend',
+      title: t('action.defend'),
+      description: t('action.defend_desc'),
+    },
+    {
+      id: 'rest',
+      title: t('action.rest'),
+      description: t('action.rest_desc'),
+    },
+  ]
+
+  const displayPlayerName = self?.name || t('battle.unknown')
+  const displayPlayerId = playerId || t('battle.pending')
+  const displayOpponentName = opponent?.name || t('battle.unknown')
+  const displayOpponentId = opponent?.playerId || opponentId || t('battle.pending')
   const playerHp = self?.hp ?? 10
   const opponentHp = opponent?.hp ?? 10
 
@@ -70,8 +79,7 @@ export function BattlePage({
   const latestResult =
     revealedResult && roomState && revealedResult.round <= roomState.round ? revealedResult : null
   const isPlayerOne = playerSide ? playerSide === 'p1' : true
-  const formatAction = (action: 'attack' | 'defend' | 'rest') =>
-    action.charAt(0).toUpperCase() + action.slice(1)
+  const formatAction = (action: 'attack' | 'defend' | 'rest') => t(actionKeyMap[action])
 
   const youResult = latestResult
     ? isPlayerOne
@@ -122,36 +130,46 @@ export function BattlePage({
     <section className="battle">
       <header className="battle__header">
         <div>
-          <p className="battle__eyebrow">Round {round} / 10</p>
-          <h1 className="battle__title">Duel in Progress</h1>
-          <p className="battle__subtitle">Choose a card and wait for your opponent.</p>
+          <p className="battle__eyebrow">
+            {t('battle.round')} {round} / 10
+          </p>
+          <h1 className="battle__title">{t('battle.title')}</h1>
+          <p className="battle__subtitle">{t('battle.subtitle')}</p>
         </div>
         <div className="battle__round">
-          <span className="battle__round-label">Current</span>
+          <span className="battle__round-label">{t('battle.current')}</span>
           <span className="battle__round-value">{round}</span>
         </div>
       </header>
       <div className="battle__nav">
         <button className="battle__back" onClick={onBack}>
-          Back to Lobby
+          {t('battle.back')}
         </button>
       </div>
 
       <div className="battle__players">
         <div className="battle__player-card">
-          <p className="battle__player-role">You</p>
+          <p className="battle__player-role">{t('battle.you')}</p>
           <p className="battle__player-name">{displayPlayerName}</p>
-          <p className="battle__player-id">ID {displayPlayerId}</p>
-          <p className="battle__hp">HP {displayPlayerHp}</p>
+          <p className="battle__player-id">
+            {t('battle.id')} {displayPlayerId}
+          </p>
+          <p className="battle__hp">
+            {t('battle.hp')} {displayPlayerHp}
+          </p>
           <p className="battle__hp-bar">
             <span style={{ width: playerHpPercent }} />
           </p>
         </div>
         <div className="battle__player-card battle__player-card--opponent">
-          <p className="battle__player-role">Opponent</p>
+          <p className="battle__player-role">{t('battle.opponent')}</p>
           <p className="battle__player-name">{displayOpponentName}</p>
-          <p className="battle__player-id">ID {displayOpponentId}</p>
-          <p className="battle__hp">HP {displayOpponentHp}</p>
+          <p className="battle__player-id">
+            {t('battle.id')} {displayOpponentId}
+          </p>
+          <p className="battle__hp">
+            {t('battle.hp')} {displayOpponentHp}
+          </p>
           <p className="battle__hp-bar">
             <span style={{ width: opponentHpPercent }} />
           </p>
@@ -159,7 +177,7 @@ export function BattlePage({
       </div>
 
       <section className="battle__actions">
-        <h2 className="battle__section-title">Choose Your Card</h2>
+        <h2 className="battle__section-title">{t('battle.choose_card')}</h2>
         <div className="battle__cards">
           {actionCards.map((card) => (
             <button
@@ -180,24 +198,28 @@ export function BattlePage({
       <section className="battle__status">
         <div className="battle__status-panel">
           <h3 className="battle__status-title">
-            {isSubmitted ? 'Waiting for opponent' : 'Your move'}
+            {isSubmitted ? t('battle.waiting') : t('battle.your_move')}
           </h3>
           <p className="battle__status-text">
-            {isSubmitted ? 'Card locked in. Await the other player.' : 'Pick a card to submit.'}
+            {isSubmitted ? t('battle.locked') : t('battle.pick')}
           </p>
           {selectedAction ? (
-            <p className="battle__status-text">Selected: {selectedAction}</p>
+            <p className="battle__status-text">
+              {t('battle.selected')}: {formatAction(selectedAction)}
+            </p>
           ) : null}
         </div>
         <div className="battle__status-panel battle__status-panel--result">
           <h3 className="battle__status-title">
-            {latestResult ? `Round ${latestResult.round} Reveal` : 'Latest Result'}
+            {latestResult
+              ? `${t('battle.round')} ${latestResult.round} ${t('battle.result')}`
+              : t('battle.latest_result')}
           </h3>
           {latestResult && youResult && opponentResult ? (
             <>
               <div className="battle__reveal">
                 <div className="battle__reveal-side">
-                  <p className="battle__reveal-label">You</p>
+                  <p className="battle__reveal-label">{t('battle.you')}</p>
                   <p className="battle__reveal-name">{displayPlayerName}</p>
                   <span className="battle__reveal-card">{formatAction(youResult.action)}</span>
                   <p className="battle__reveal-delta">
@@ -205,12 +227,12 @@ export function BattlePage({
                     {youResult.delta}
                   </p>
                   <p className="battle__reveal-hp">
-                    HP {youBeforeHp} → {youResult.hp}
+                    {t('battle.hp')} {youBeforeHp} → {youResult.hp}
                   </p>
                 </div>
-                <div className="battle__reveal-vs">VS</div>
+                <div className="battle__reveal-vs">{t('battle.vs')}</div>
                 <div className="battle__reveal-side">
-                  <p className="battle__reveal-label">Opponent</p>
+                  <p className="battle__reveal-label">{t('battle.opponent')}</p>
                   <p className="battle__reveal-name">{displayOpponentName}</p>
                   <span className="battle__reveal-card">{formatAction(opponentResult.action)}</span>
                   <p className="battle__reveal-delta">
@@ -218,28 +240,30 @@ export function BattlePage({
                     {opponentResult.delta}
                   </p>
                   <p className="battle__reveal-hp">
-                    HP {opponentBeforeHp} → {opponentResult.hp}
+                    {t('battle.hp')} {opponentBeforeHp} → {opponentResult.hp}
                   </p>
                 </div>
               </div>
               <p className="battle__status-text">
-                Net: You {youResult.delta > 0 ? '+' : ''}
-                {youResult.delta}, Opponent {opponentResult.delta > 0 ? '+' : ''}
+                {t('battle.net')}: {t('battle.you')} {youResult.delta > 0 ? '+' : ''}
+                {youResult.delta}, {t('battle.opponent')} {opponentResult.delta > 0 ? '+' : ''}
                 {opponentResult.delta}
               </p>
             </>
           ) : (
-            <p className="battle__status-text">Results will appear after both players act.</p>
+            <p className="battle__status-text">{t('battle.results_pending')}</p>
           )}
         </div>
       </section>
       {isRevealOpen && pendingReveal ? (
         <div className="battle__reveal-overlay">
           <div className="battle__reveal-modal">
-            <h3 className="battle__reveal-title">Round {pendingReveal.round} Reveal</h3>
+            <h3 className="battle__reveal-title">
+              {t('battle.round')} {pendingReveal.round} {t('battle.result')}
+            </h3>
             <div className="battle__reveal-grid">
               <div className="battle__reveal-side">
-                <p className="battle__reveal-label">You</p>
+                <p className="battle__reveal-label">{t('battle.you')}</p>
                 <p className="battle__reveal-name">{displayPlayerName}</p>
                 <span className="battle__reveal-card">
                   {formatAction(isPlayerOne ? pendingReveal.p1.action : pendingReveal.p2.action)}
@@ -249,9 +273,9 @@ export function BattlePage({
                   {isPlayerOne ? pendingReveal.p1.delta : pendingReveal.p2.delta}
                 </p>
               </div>
-              <div className="battle__reveal-vs">VS</div>
+              <div className="battle__reveal-vs">{t('battle.vs')}</div>
               <div className="battle__reveal-side">
-                <p className="battle__reveal-label">Opponent</p>
+                <p className="battle__reveal-label">{t('battle.opponent')}</p>
                 <p className="battle__reveal-name">{displayOpponentName}</p>
                 <span className="battle__reveal-card">
                   {formatAction(isPlayerOne ? pendingReveal.p2.action : pendingReveal.p1.action)}
@@ -263,7 +287,7 @@ export function BattlePage({
               </div>
             </div>
             <button className="battle__reveal-confirm" onClick={handleConfirmReveal}>
-              Confirm
+              {t('battle.confirm')}
             </button>
           </div>
         </div>

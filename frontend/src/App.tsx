@@ -1,10 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { BattlePage } from './pages/BattlePage'
 import { CreateRoomPage } from './pages/CreateRoomPage'
 import { EntryPage } from './pages/EntryPage'
 import { MatchPage } from './pages/MatchPage'
 import { ResultPage } from './pages/ResultPage'
+import { createTranslator, getPreferredLanguage, languageStorageKey, type Language } from './i18n'
 import type { GameOver, RoomState, RoundResult } from './types'
 
 type Theme = 'light' | 'dark'
@@ -63,6 +64,7 @@ const getPreferredTheme = (): Theme => {
 
 function App() {
   const [theme, setTheme] = useState<Theme>(() => getPreferredTheme())
+  const [language, setLanguage] = useState<Language>(() => getPreferredLanguage())
   const [route, setRoute] = useState<Route>(resolveRoute)
   const [playerInfo, setPlayerInfo] = useState({
     roomId: '',
@@ -75,6 +77,7 @@ function App() {
   const [gameOver, setGameOver] = useState<GameOver | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const pendingMessageRef = useRef<string | null>(null)
+  const t = useMemo(() => createTranslator(language), [language])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -85,6 +88,15 @@ function App() {
       // Ignore write failures (private mode, restricted storage).
     }
   }, [theme])
+
+  useEffect(() => {
+    document.documentElement.lang = language
+    try {
+      window.localStorage.setItem(languageStorageKey, language)
+    } catch (error) {
+      // Ignore write failures (private mode, restricted storage).
+    }
+  }, [language])
 
   useEffect(() => {
     const handlePopState = () => {
@@ -132,11 +144,11 @@ function App() {
 
   useEffect(() => {
     if (playerInfo.playerName) {
-      document.title = `${playerInfo.playerName} - Card Duel`
+      document.title = `${playerInfo.playerName} - ${t('app.title')}`
     } else {
-      document.title = 'Card Duel'
+      document.title = t('app.title')
     }
-  }, [playerInfo.playerName])
+  }, [playerInfo.playerName, t])
 
   const resetSession = () => {
     setPlayerInfo({ roomId: '', playerName: '', playerId: '', opponentId: '' })
@@ -358,11 +370,20 @@ function App() {
           onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
           aria-pressed={theme === 'dark'}
         >
-          {theme === 'light' ? 'Night' : 'Day'}
+          {theme === 'light' ? t('toggle.theme.dark') : t('toggle.theme.light')}
+        </button>
+        <button
+          className="app__toggle"
+          type="button"
+          onClick={() => setLanguage(language === 'zh' ? 'en' : 'zh')}
+          aria-pressed={language === 'zh'}
+        >
+          {language === 'zh' ? t('toggle.lang.en') : t('toggle.lang.zh')}
         </button>
       </div>
       {route.name === 'entry' ? (
         <EntryPage
+          t={t}
           onCreate={navigateToCreate}
           onJoin={({ roomId, playerName }) => {
             setPlayerInfo({
@@ -378,6 +399,7 @@ function App() {
       ) : null}
       {route.name === 'create' ? (
         <CreateRoomPage
+          t={t}
           onBack={navigateToEntry}
           onCreate={({ playerName }) => {
             setPlayerInfo({
@@ -392,6 +414,7 @@ function App() {
       ) : null}
       {route.name === 'match' ? (
         <MatchPage
+          t={t}
           roomId={route.roomId}
           playerName={playerInfo.playerName}
           playerId={playerInfo.playerId}
@@ -402,6 +425,7 @@ function App() {
       ) : null}
       {route.name === 'battle' ? (
         <BattlePage
+          t={t}
           playerId={playerInfo.playerId}
           opponentId={playerInfo.opponentId}
           roomState={roomState}
@@ -413,6 +437,7 @@ function App() {
       ) : null}
       {route.name === 'result' ? (
         <ResultPage
+          t={t}
           playerId={playerInfo.playerId}
           playerSide={playerSide}
           gameOver={gameOver}
