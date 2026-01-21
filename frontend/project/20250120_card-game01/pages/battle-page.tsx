@@ -33,6 +33,7 @@ export function BattlePage({
   const opponent = players.find((player) => player.playerId !== playerId)
   const isSubmitted = self?.submitted ?? false
   const status = roomState?.status ?? 'waiting'
+  const isYourTurn = status === 'playing' && !isSubmitted
   const [selectedAction, setSelectedAction] = useState<'attack' | 'defend' | 'rest' | null>(null)
   const [pendingReveal, setPendingReveal] = useState<RoundResult | null>(null)
   const [revealedResult, setRevealedResult] = useState<RoundResult | null>(null)
@@ -196,11 +197,11 @@ export function BattlePage({
       </section>
 
       <section className="battle__status">
-        <div className="battle__status-panel">
-          <h3 className="battle__status-title">
+        <div className={`battle__status-panel${isYourTurn ? ' battle__status-panel--prompt' : ''}`}>
+          <h3 className={`battle__status-title${isYourTurn ? ' battle__status-title--prompt' : ''}`}>
             {isSubmitted ? t('battle.waiting') : t('battle.your_move')}
           </h3>
-          <p className="battle__status-text">
+          <p className={`battle__status-text${isYourTurn ? ' battle__status-text--prompt' : ''}`}>
             {isSubmitted ? t('battle.locked') : t('battle.pick')}
           </p>
           {selectedAction ? (
