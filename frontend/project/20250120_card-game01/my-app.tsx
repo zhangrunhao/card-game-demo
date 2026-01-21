@@ -5,7 +5,13 @@ import { CreateRoomPage } from './pages/create-room-page'
 import { EntryPage } from './pages/entry-page'
 import { MatchPage } from './pages/match-page'
 import { ResultPage } from './pages/result-page'
-import { createTranslator, getPreferredLanguage, languageStorageKey, type Language } from './i18n'
+import {
+  createTranslator,
+  getPreferredLanguage,
+  languageStorageKey,
+  type Language,
+  type MessageKey,
+} from './i18n'
 import type { GameOver, RoomState, RoundResult } from './types'
 
 type Theme = 'light' | 'dark'
@@ -35,15 +41,15 @@ const getPreferredTheme = (): Theme => {
     return stored
   }
 
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light'
+  return 'light'
 }
 
 function MyApp() {
   const [theme, setTheme] = useState<Theme>(() => getPreferredTheme())
   const [language, setLanguage] = useState<Language>(() => getPreferredLanguage())
   const [route, setRoute] = useState<Route>({ name: 'entry' })
+  const [entryErrorKey, setEntryErrorKey] = useState<MessageKey | null>(null)
+  const pendingJoinRef = useRef(false)
   const [playerInfo, setPlayerInfo] = useState({
     roomId: '',
     playerName: '',
@@ -113,6 +119,7 @@ function MyApp() {
     setRoomState(null)
     setRoundResult(null)
     setGameOver(null)
+    pendingJoinRef.current = false
     if (wsRef.current) {
       wsRef.current.close()
       wsRef.current = null
@@ -120,13 +127,17 @@ function MyApp() {
     pendingMessageRef.current = null
   }
 
-  const navigateToEntry = () => {
+  const navigateToEntry = (options?: { preserveEntryError?: boolean }) => {
     setRoute({ name: 'entry' })
     resetSession()
+    if (!options?.preserveEntryError) {
+      setEntryErrorKey(null)
+    }
   }
 
   const navigateToCreate = () => {
     setRoute({ name: 'create' })
+    setEntryErrorKey(null)
   }
 
   const navigateToMatch = (roomId: string) => {
@@ -157,6 +168,8 @@ function MyApp() {
       const roomId = message.payload?.roomId || ''
       const playerId = message.payload?.playerId || ''
       setPlayerInfo((prev) => ({ ...prev, roomId, playerId }))
+      setEntryErrorKey(null)
+      pendingJoinRef.current = false
       if (roomId) {
         navigateToMatch(roomId)
       }
@@ -167,8 +180,22 @@ function MyApp() {
       const roomId = message.payload?.roomId || ''
       const playerId = message.payload?.playerId || ''
       setPlayerInfo((prev) => ({ ...prev, roomId, playerId }))
+      setEntryErrorKey(null)
+      pendingJoinRef.current = false
       if (roomId) {
         navigateToMatch(roomId)
+      }
+      return
+    }
+
+    if (message.type === 'error') {
+      const errorMessage = message.payload?.message
+      if (pendingJoinRef.current) {
+        pendingJoinRef.current = false
+        if (errorMessage === 'Room not found.') {
+          setEntryErrorKey('entry.error.room_not_found')
+          navigateToEntry({ preserveEntryError: true })
+        }
       }
       return
     }
@@ -198,6 +225,11 @@ function MyApp() {
 
       if (payload.status === 'playing' && payload.players.length === 2) {
         navigateToBattle()
+      }
+      if (payload.players.length < 2) {
+        setRoundResult(null)
+        setGameOver(null)
+        navigateToMatch(payload.roomId)
       }
       return
     }
@@ -328,7 +360,11 @@ function MyApp() {
         <EntryPage
           t={t}
           onCreate={navigateToCreate}
+          serverErrorKey={entryErrorKey}
+          onClearServerError={() => setEntryErrorKey(null)}
           onJoin={({ roomId, playerName }) => {
+            setEntryErrorKey(null)
+            pendingJoinRef.current = true
             setPlayerInfo({
               roomId,
               playerName,
@@ -336,7 +372,6 @@ function MyApp() {
               opponentId: '',
             })
             sendMessage({ type: 'join_room', payload: { roomId, playerName } })
-            navigateToMatch(roomId)
           }}
         />
       ) : null}

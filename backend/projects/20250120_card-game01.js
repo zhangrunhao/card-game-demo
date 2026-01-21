@@ -68,32 +68,26 @@ export const registerCardGame01 = ({ app, server }) => {
     })
   }
 
+  const DELTA_MATRIX = {
+    attack: {
+      attack: [-2, -2],
+      defend: [-1, -1],
+      rest: [1, -2],
+    },
+    defend: {
+      attack: [-1, -1],
+      defend: [-1, -1],
+      rest: [0, 1],
+    },
+    rest: {
+      attack: [-2, 1],
+      defend: [1, 0],
+      rest: [0, 0],
+    },
+  }
+
   const resolveDeltas = (action1, action2) => {
-    if (action1 === 'attack' && action2 === 'attack') {
-      return [-2, -2]
-    }
-    if (action1 === 'attack' && action2 === 'defend') {
-      return [0, 0]
-    }
-    if (action1 === 'attack' && action2 === 'rest') {
-      return [0, -2]
-    }
-    if (action1 === 'defend' && action2 === 'attack') {
-      return [0, 0]
-    }
-    if (action1 === 'defend' && action2 === 'defend') {
-      return [0, 0]
-    }
-    if (action1 === 'defend' && action2 === 'rest') {
-      return [0, 1]
-    }
-    if (action1 === 'rest' && action2 === 'attack') {
-      return [-2, 0]
-    }
-    if (action1 === 'rest' && action2 === 'defend') {
-      return [1, 0]
-    }
-    return [1, 1]
+    return DELTA_MATRIX[action1]?.[action2] ?? [0, 0]
   }
 
   wss.on('connection', (ws) => {

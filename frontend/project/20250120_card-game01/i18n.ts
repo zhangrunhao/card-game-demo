@@ -17,6 +17,7 @@ export const messages = {
     "entry.error.room_required": "Room ID is required.",
     "entry.error.room_numeric": "Room ID must be numeric.",
     "entry.error.name_required": "Player name is required.",
+    "entry.error.room_not_found": "Room not found.",
     "create.eyebrow": "Create Room",
     "create.title": "Start a New Match",
     "create.subtitle": "Enter your name to generate a room.",
@@ -106,6 +107,7 @@ export const messages = {
     "entry.error.room_required": "请填写房间号。",
     "entry.error.room_numeric": "房间号必须是数字。",
     "entry.error.name_required": "请填写玩家昵称。",
+    "entry.error.room_not_found": "房间不存在，请检查房间号。",
     "create.eyebrow": "创建房间",
     "create.title": "开始新的对局",
     "create.subtitle": "输入昵称以生成房间。",
@@ -187,7 +189,7 @@ export const languageStorageKey = "card_duel_lang";
 
 export const getPreferredLanguage = (): Language => {
   if (typeof window === "undefined") {
-    return "en";
+    return "zh";
   }
 
   let stored: string | null = null;
@@ -201,8 +203,7 @@ export const getPreferredLanguage = (): Language => {
     return stored;
   }
 
-  const navigatorLang = window.navigator?.language?.toLowerCase() ?? "";
-  return navigatorLang.startsWith("zh") ? "zh" : "en";
+  return "zh";
 };
 
 export const createTranslator = (language: Language): Translator => {

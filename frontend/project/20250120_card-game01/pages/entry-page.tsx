@@ -5,12 +5,15 @@ type EntryPageProps = {
   t: Translator
   onJoin: (payload: { roomId: string; playerName: string }) => void
   onCreate: () => void
+  serverErrorKey?: MessageKey | null
+  onClearServerError?: () => void
 }
 
-export function EntryPage({ t, onJoin, onCreate }: EntryPageProps) {
+export function EntryPage({ t, onJoin, onCreate, serverErrorKey, onClearServerError }: EntryPageProps) {
   const [roomId, setRoomId] = useState('')
   const [playerName, setPlayerName] = useState('')
   const [errorKey, setErrorKey] = useState<MessageKey | null>(null)
+  const displayErrorKey = errorKey ?? serverErrorKey ?? null
 
   const validate = () => {
     const trimmedRoomId = roomId.trim()
@@ -36,6 +39,9 @@ export function EntryPage({ t, onJoin, onCreate }: EntryPageProps) {
   }
 
   const handleJoin = () => {
+    if (serverErrorKey && onClearServerError) {
+      onClearServerError()
+    }
     if (!validate()) {
       return
     }
@@ -47,8 +53,10 @@ export function EntryPage({ t, onJoin, onCreate }: EntryPageProps) {
   }
 
   const hasRoomError =
-    errorKey === 'entry.error.room_required' || errorKey === 'entry.error.room_numeric'
-  const hasNameError = errorKey === 'entry.error.name_required'
+    displayErrorKey === 'entry.error.room_required' ||
+    displayErrorKey === 'entry.error.room_numeric' ||
+    displayErrorKey === 'entry.error.room_not_found'
+  const hasNameError = displayErrorKey === 'entry.error.name_required'
 
   return (
     <section className="entry">
@@ -67,7 +75,12 @@ export function EntryPage({ t, onJoin, onCreate }: EntryPageProps) {
             value={roomId}
             inputMode="numeric"
             pattern="[0-9]*"
-            onChange={(event) => setRoomId(event.target.value.replace(/\D/g, ''))}
+            onChange={(event) => {
+              if (serverErrorKey && onClearServerError) {
+                onClearServerError()
+              }
+              setRoomId(event.target.value.replace(/\D/g, ''))
+            }}
           />
         </label>
 
@@ -77,11 +90,16 @@ export function EntryPage({ t, onJoin, onCreate }: EntryPageProps) {
             className={`entry__input ${hasNameError ? 'entry__input--error' : ''}`}
             placeholder={t('entry.player_placeholder')}
             value={playerName}
-            onChange={(event) => setPlayerName(event.target.value)}
+            onChange={(event) => {
+              if (serverErrorKey && onClearServerError) {
+                onClearServerError()
+              }
+              setPlayerName(event.target.value)
+            }}
           />
         </label>
 
-        {errorKey ? <p className="entry__error">{t(errorKey)}</p> : null}
+        {displayErrorKey ? <p className="entry__error">{t(displayErrorKey)}</p> : null}
 
         <div className="entry__actions">
           <button className="entry__button entry__button--ghost" onClick={onCreate}>
