@@ -50,6 +50,7 @@ function MyApp() {
   const [route, setRoute] = useState<Route>({ name: 'entry' })
   const [entryErrorKey, setEntryErrorKey] = useState<MessageKey | null>(null)
   const pendingJoinRef = useRef(false)
+  const pendingBotRef = useRef(false)
   const [playerInfo, setPlayerInfo] = useState({
     roomId: '',
     playerName: '',
@@ -120,6 +121,7 @@ function MyApp() {
     setRoundResult(null)
     setGameOver(null)
     pendingJoinRef.current = false
+    pendingBotRef.current = false
     if (wsRef.current) {
       wsRef.current.close()
       wsRef.current = null
@@ -167,11 +169,17 @@ function MyApp() {
     if (message.type === 'room_created') {
       const roomId = message.payload?.roomId || ''
       const playerId = message.payload?.playerId || ''
+      const isBotRoom = pendingBotRef.current
       setPlayerInfo((prev) => ({ ...prev, roomId, playerId }))
       setEntryErrorKey(null)
       pendingJoinRef.current = false
+      pendingBotRef.current = false
       if (roomId) {
-        navigateToMatch(roomId)
+        if (isBotRoom) {
+          navigateToBattle()
+        } else {
+          navigateToMatch(roomId)
+        }
       }
       return
     }
@@ -182,6 +190,7 @@ function MyApp() {
       setPlayerInfo((prev) => ({ ...prev, roomId, playerId }))
       setEntryErrorKey(null)
       pendingJoinRef.current = false
+      pendingBotRef.current = false
       if (roomId) {
         navigateToMatch(roomId)
       }
@@ -386,7 +395,18 @@ function MyApp() {
               playerId: '',
               opponentId: '',
             })
+            pendingBotRef.current = false
             sendMessage({ type: 'create_room', payload: { playerName } })
+          }}
+          onCreateBot={({ playerName }) => {
+            setPlayerInfo({
+              roomId: '',
+              playerName,
+              playerId: '',
+              opponentId: '',
+            })
+            pendingBotRef.current = true
+            sendMessage({ type: 'create_room_bot', payload: { playerName } })
           }}
         />
       ) : null}

@@ -4,10 +4,11 @@ import type { MessageKey, Translator } from '../i18n'
 type CreateRoomPageProps = {
   t: Translator
   onCreate: (payload: { playerName: string }) => void
+  onCreateBot: (payload: { playerName: string }) => void
   onBack: () => void
 }
 
-export function CreateRoomPage({ t, onCreate, onBack }: CreateRoomPageProps) {
+export function CreateRoomPage({ t, onCreate, onCreateBot, onBack }: CreateRoomPageProps) {
   const [playerName, setPlayerName] = useState('')
   const [errorKey, setErrorKey] = useState<MessageKey | null>(null)
 
@@ -20,6 +21,17 @@ export function CreateRoomPage({ t, onCreate, onBack }: CreateRoomPageProps) {
 
     setErrorKey(null)
     onCreate({ playerName: trimmedName })
+  }
+
+  const handleBotChallenge = () => {
+    const trimmedName = playerName.trim()
+    if (!trimmedName) {
+      setErrorKey('create.error.name_required')
+      return
+    }
+
+    setErrorKey(null)
+    onCreateBot({ playerName: trimmedName })
   }
 
   return (
@@ -49,6 +61,9 @@ export function CreateRoomPage({ t, onCreate, onBack }: CreateRoomPageProps) {
           </button>
           <button className="entry__button" onClick={handleCreate}>
             {t('create.confirm')}
+          </button>
+          <button className="entry__button" onClick={handleBotChallenge}>
+            {t('create.bot')}
           </button>
         </div>
       </div>

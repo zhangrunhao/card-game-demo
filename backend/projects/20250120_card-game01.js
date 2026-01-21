@@ -19,6 +19,9 @@ export const registerCardGame01 = ({ app, server }) => {
 
   const rooms = new Map()
   const ACTIONS = new Set(['attack', 'defend', 'rest'])
+  const BOT_ACTIONS = ['attack', 'defend', 'rest']
+  const BOT_NAME = '机器人'
+  const BOT_RESPONSE_DELAY_MS = 3000
 
   const clampHp = (value) => Math.max(0, Math.min(10, value))
 
@@ -31,6 +34,13 @@ export const registerCardGame01 = ({ app, server }) => {
   }
 
   const generatePlayerId = () => `user_${Math.random().toString(36).slice(2, 8)}`
+  const createBotPlayer = () => ({
+    playerId: generatePlayerId(),
+    name: BOT_NAME,
+    hp: 10,
+    ws: null,
+    isBot: true,
+  })
 
   const send = (ws, message) => {
     if (!ws || ws.readyState !== 1) {
@@ -68,6 +78,16 @@ export const registerCardGame01 = ({ app, server }) => {
     })
   }
 
+  const pickBotAction = () => BOT_ACTIONS[Math.floor(Math.random() * BOT_ACTIONS.length)]
+  const getBotPlayer = (room) => room.players.find((player) => player.isBot)
+  const roomHasBot = (room) => Boolean(getBotPlayer(room))
+  const clearBotTimer = (room) => {
+    if (room.botTimeout) {
+      clearTimeout(room.botTimeout)
+      room.botTimeout = null
+    }
+  }
+
   const DELTA_MATRIX = {
     attack: {
       attack: [-2, -2],
@@ -88,6 +108,90 @@ export const registerCardGame01 = ({ app, server }) => {
 
   const resolveDeltas = (action1, action2) => {
     return DELTA_MATRIX[action1]?.[action2] ?? [0, 0]
+  }
+
+  const maybeResolveRound = (room) => {
+    if (room.players.length < 2) {
+      return
+    }
+
+    const actions = room.players.map((entry) => room.actions[entry.playerId])
+    if (actions.some((value) => !value)) {
+      return
+    }
+
+    clearBotTimer(room)
+
+    const [p1, p2] = room.players
+    const [delta1, delta2] = resolveDeltas(actions[0], actions[1])
+    p1.hp = clampHp(p1.hp + delta1)
+    p2.hp = clampHp(p2.hp + delta2)
+
+    broadcastToRoom(room, {
+      type: 'round_result',
+      payload: {
+        roomId: room.roomId,
+        round: room.round,
+        p1: { action: actions[0], delta: delta1, hp: p1.hp },
+        p2: { action: actions[1], delta: delta2, hp: p2.hp },
+      },
+    })
+
+    const shouldFinish = p1.hp === 0 || p2.hp === 0 || room.round >= 10
+    room.actions = {}
+
+    if (shouldFinish) {
+      room.status = 'finished'
+      broadcastRoomState(room)
+
+      let result = 'draw'
+      if (p1.hp > p2.hp) {
+        result = 'p1_win'
+      } else if (p2.hp > p1.hp) {
+        result = 'p2_win'
+      }
+
+      broadcastToRoom(room, {
+        type: 'game_over',
+        payload: {
+          roomId: room.roomId,
+          round: room.round,
+          result,
+          final: {
+            p1: { hp: p1.hp },
+            p2: { hp: p2.hp },
+          },
+        },
+      })
+      return
+    }
+
+    room.round += 1
+    broadcastRoomState(room)
+  }
+
+  const scheduleBotAction = (room) => {
+    if (!roomHasBot(room) || room.botTimeout) {
+      return
+    }
+
+    room.botTimeout = setTimeout(() => {
+      room.botTimeout = null
+      const botPlayer = getBotPlayer(room)
+      if (!botPlayer) {
+        return
+      }
+      if (room.status !== 'playing') {
+        return
+      }
+      if (room.actions[botPlayer.playerId]) {
+        return
+      }
+
+      room.actions[botPlayer.playerId] = pickBotAction()
+      broadcastRoomState(room)
+      maybeResolveRound(room)
+    }, BOT_RESPONSE_DELAY_MS)
   }
 
   wss.on('connection', (ws) => {
@@ -129,6 +233,37 @@ export const registerCardGame01 = ({ app, server }) => {
           players: [{ playerId, name: playerName, hp: 10, ws }],
           actions: {},
           rematchReady: new Set(),
+          botTimeout: null,
+        }
+
+        rooms.set(roomId, room)
+        ws.roomId = roomId
+        ws.playerId = playerId
+
+        send(ws, { type: 'room_created', payload: { roomId, playerId } })
+        broadcastRoomState(room)
+        return
+      }
+
+      if (type === 'create_room_bot') {
+        const playerName = payload?.playerName?.trim()
+        if (!playerName) {
+          sendError(ws, 'Player name is required.')
+          return
+        }
+
+        const roomId = generateRoomId()
+        const playerId = payload?.playerId?.trim() || generatePlayerId()
+        const botPlayer = createBotPlayer()
+
+        const room = {
+          roomId,
+          round: 1,
+          status: 'playing',
+          players: [{ playerId, name: playerName, hp: 10, ws }, botPlayer],
+          actions: {},
+          rematchReady: new Set(),
+          botTimeout: null,
         }
 
         rooms.set(roomId, room)
@@ -212,6 +347,10 @@ export const registerCardGame01 = ({ app, server }) => {
           sendError(ws, 'Player not in room.')
           return
         }
+        if (player.isBot) {
+          sendError(ws, 'Bot action is not allowed.')
+          return
+        }
 
         if (room.actions[playerId]) {
           sendError(ws, 'Action already submitted.')
@@ -221,61 +360,12 @@ export const registerCardGame01 = ({ app, server }) => {
         room.actions[playerId] = action
         broadcastRoomState(room)
 
-        if (room.players.length < 2) {
-          return
+        const botPlayer = getBotPlayer(room)
+        if (botPlayer && !room.actions[botPlayer.playerId]) {
+          scheduleBotAction(room)
         }
 
-        const actions = room.players.map((entry) => room.actions[entry.playerId])
-        if (actions.some((value) => !value)) {
-          return
-        }
-
-        const [p1, p2] = room.players
-        const [delta1, delta2] = resolveDeltas(actions[0], actions[1])
-        p1.hp = clampHp(p1.hp + delta1)
-        p2.hp = clampHp(p2.hp + delta2)
-
-        broadcastToRoom(room, {
-          type: 'round_result',
-          payload: {
-            roomId: room.roomId,
-            round: room.round,
-            p1: { action: actions[0], delta: delta1, hp: p1.hp },
-            p2: { action: actions[1], delta: delta2, hp: p2.hp },
-          },
-        })
-
-        const shouldFinish = p1.hp === 0 || p2.hp === 0 || room.round >= 10
-        room.actions = {}
-
-        if (shouldFinish) {
-          room.status = 'finished'
-          broadcastRoomState(room)
-
-          let result = 'draw'
-          if (p1.hp > p2.hp) {
-            result = 'p1_win'
-          } else if (p2.hp > p1.hp) {
-            result = 'p2_win'
-          }
-
-          broadcastToRoom(room, {
-            type: 'game_over',
-            payload: {
-              roomId: room.roomId,
-              round: room.round,
-              result,
-              final: {
-                p1: { hp: p1.hp },
-                p2: { hp: p2.hp },
-              },
-            },
-          })
-          return
-        }
-
-        room.round += 1
-        broadcastRoomState(room)
+        maybeResolveRound(room)
         return
       }
 
@@ -294,6 +384,19 @@ export const registerCardGame01 = ({ app, server }) => {
         }
         if (room.status === 'playing') {
           sendError(ws, 'Rematch is only available after game over.')
+          return
+        }
+
+        if (roomHasBot(room)) {
+          clearBotTimer(room)
+          room.round = 1
+          room.status = 'playing'
+          room.actions = {}
+          room.players.forEach((player) => {
+            player.hp = 10
+          })
+          room.rematchReady.clear()
+          broadcastRoomState(room)
           return
         }
 
@@ -337,7 +440,8 @@ export const registerCardGame01 = ({ app, server }) => {
         room.rematchReady.delete(ws.playerId)
       }
 
-      if (room.players.length === 0) {
+      if (room.players.length === 0 || room.players.every((player) => player.isBot)) {
+        clearBotTimer(room)
         rooms.delete(roomId)
         return
       }
