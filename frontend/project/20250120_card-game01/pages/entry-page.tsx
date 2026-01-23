@@ -1,114 +1,34 @@
-import { useState } from 'react'
-import type { MessageKey, Translator } from '../i18n'
+import type { Translator } from '../i18n'
 
 type EntryPageProps = {
   t: Translator
-  onJoin: (payload: { roomId: string; playerName: string }) => void
-  onCreate: () => void
-  serverErrorKey?: MessageKey | null
-  onClearServerError?: () => void
+  onHumanMatch: () => void
+  onBotMatch: () => void
 }
 
-export function EntryPage({ t, onJoin, onCreate, serverErrorKey, onClearServerError }: EntryPageProps) {
-  const [roomId, setRoomId] = useState('')
-  const [playerName, setPlayerName] = useState('')
-  const [errorKey, setErrorKey] = useState<MessageKey | null>(null)
-  const displayErrorKey = errorKey ?? serverErrorKey ?? null
-
-  const validate = () => {
-    const trimmedRoomId = roomId.trim()
-    const trimmedName = playerName.trim()
-
-    if (!trimmedRoomId) {
-      setErrorKey('entry.error.room_required')
-      return false
-    }
-
-    if (!/^\d+$/.test(trimmedRoomId)) {
-      setErrorKey('entry.error.room_numeric')
-      return false
-    }
-
-    if (!trimmedName) {
-      setErrorKey('entry.error.name_required')
-      return false
-    }
-
-    setErrorKey(null)
-    return true
-  }
-
-  const handleJoin = () => {
-    if (serverErrorKey && onClearServerError) {
-      onClearServerError()
-    }
-    if (!validate()) {
-      return
-    }
-
-    onJoin({
-      roomId: roomId.trim(),
-      playerName: playerName.trim(),
-    })
-  }
-
-  const hasRoomError =
-    displayErrorKey === 'entry.error.room_required' ||
-    displayErrorKey === 'entry.error.room_numeric' ||
-    displayErrorKey === 'entry.error.room_not_found'
-  const hasNameError = displayErrorKey === 'entry.error.name_required'
-
+export function EntryPage({ t, onHumanMatch, onBotMatch }: EntryPageProps) {
   return (
-    <section className="entry">
+    <section className="entry entry--home">
       <header className="entry__header">
         <p className="entry__eyebrow">{t('entry.eyebrow')}</p>
         <h1 className="entry__title">{t('entry.title')}</h1>
         <p className="entry__subtitle">{t('entry.subtitle')}</p>
       </header>
 
-      <div className="entry__form">
-        <label className="entry__field">
-          <span className="entry__label">{t('entry.room_id')}</span>
-          <input
-            className={`entry__input ${hasRoomError ? 'entry__input--error' : ''}`}
-            placeholder={t('entry.room_placeholder')}
-            value={roomId}
-            inputMode="numeric"
-            pattern="[0-9]*"
-            onChange={(event) => {
-              if (serverErrorKey && onClearServerError) {
-                onClearServerError()
-              }
-              setRoomId(event.target.value.replace(/\D/g, ''))
-            }}
-          />
-        </label>
+      <div className="entry__choices">
+        <button className="entry__choice" onClick={onHumanMatch} type="button">
+          <span className="entry__choice-tag">{t('entry.choice_human_tag')}</span>
+          <h2 className="entry__choice-title">{t('entry.choice_human')}</h2>
+          <p className="entry__choice-desc">{t('entry.choice_human_desc')}</p>
+          <span className="entry__choice-action">{t('entry.choice_human_action')}</span>
+        </button>
 
-        <label className="entry__field">
-          <span className="entry__label">{t('entry.player_name')}</span>
-          <input
-            className={`entry__input ${hasNameError ? 'entry__input--error' : ''}`}
-            placeholder={t('entry.player_placeholder')}
-            value={playerName}
-            onChange={(event) => {
-              if (serverErrorKey && onClearServerError) {
-                onClearServerError()
-              }
-              setPlayerName(event.target.value)
-            }}
-          />
-        </label>
-
-        {displayErrorKey ? <p className="entry__error">{t(displayErrorKey)}</p> : null}
-
-        <div className="entry__actions">
-          <button className="entry__button entry__button--ghost" onClick={onCreate}>
-            {t('entry.create')}
-          </button>
-          <button className="entry__button" onClick={handleJoin}>
-            {t('entry.join')}
-          </button>
-        </div>
+        <button className="entry__choice entry__choice--bot" onClick={onBotMatch} type="button">
+          <span className="entry__choice-tag">{t('entry.choice_bot_tag')}</span>
+          <h2 className="entry__choice-title">{t('entry.choice_bot')}</h2>
+          <p className="entry__choice-desc">{t('entry.choice_bot_desc')}</p>
+          <span className="entry__choice-action">{t('entry.choice_bot_action')}</span>
+        </button>
       </div>
     </section>
   )

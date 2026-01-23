@@ -65,6 +65,23 @@ export const registerCardGame01 = ({ app, server }) => {
     })),
   })
 
+  const buildRoomSummary = (room) => ({
+    roomId: room.roomId,
+    status: room.status,
+    round: room.round,
+    playersCount: room.players.length,
+    hasBot: room.players.some((player) => player.isBot),
+    players: room.players.map((player) => ({
+      name: player.name,
+      isBot: Boolean(player.isBot),
+    })),
+  })
+
+  router.get('/rooms', (_req, res) => {
+    const roomsList = Array.from(rooms.values()).map((room) => buildRoomSummary(room))
+    res.json({ rooms: roomsList })
+  })
+
   const broadcastRoomState = (room) => {
     const payload = buildRoomState(room)
     room.players.forEach((player) => {

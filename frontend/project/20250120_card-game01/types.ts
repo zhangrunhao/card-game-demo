@@ -10,6 +10,17 @@ export type RoomState = {
   }>
 }
 
+export type RoomSummary = {
+  roomId: string
+  status: 'waiting' | 'playing' | 'finished'
+  playersCount: number
+  hasBot: boolean
+  players: Array<{
+    name: string
+    isBot?: boolean
+  }>
+}
+
 export type RoundResult = {
   roomId: string
   round: number

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import './my-app.css'
 import { BattlePage } from './pages/battle-page'
-import { CreateRoomPage } from './pages/create-room-page'
 import { EntryPage } from './pages/entry-page'
+import { LobbyPage } from './pages/lobby-page'
 import { MatchPage } from './pages/match-page'
 import { ResultPage } from './pages/result-page'
 import {
@@ -12,13 +12,13 @@ import {
   type Language,
   type MessageKey,
 } from './i18n'
-import type { GameOver, RoomState, RoundResult } from './types'
+import type { GameOver, RoomState, RoomSummary, RoundResult } from './types'
 
 type Theme = 'light' | 'dark'
 
 type Route =
   | { name: 'entry' }
-  | { name: 'create' }
+  | { name: 'lobby' }
   | { name: 'match'; roomId: string }
   | { name: 'battle' }
   | { name: 'result' }
@@ -48,7 +48,11 @@ function MyApp() {
   const [theme, setTheme] = useState<Theme>(() => getPreferredTheme())
   const [language, setLanguage] = useState<Language>(() => getPreferredLanguage())
   const [route, setRoute] = useState<Route>({ name: 'entry' })
-  const [entryErrorKey, setEntryErrorKey] = useState<MessageKey | null>(null)
+  const [lobbyErrorKey, setLobbyErrorKey] = useState<MessageKey | null>(null)
+  const [rooms, setRooms] = useState<RoomSummary[]>([])
+  const [roomsErrorKey, setRoomsErrorKey] = useState<MessageKey | null>(null)
+  const [roomsLoading, setRoomsLoading] = useState(false)
+  const [draftName, setDraftName] = useState('')
   const pendingJoinRef = useRef(false)
   const pendingBotRef = useRef(false)
   const [playerInfo, setPlayerInfo] = useState({
@@ -115,6 +119,48 @@ function MyApp() {
     }
   }, [playerInfo.playerName, t])
 
+  useEffect(() => {
+    if (route.name !== 'lobby') {
+      return
+    }
+
+    let active = true
+    const fetchRooms = async () => {
+      if (!active) {
+        return
+      }
+      setRoomsLoading(true)
+      try {
+        const response = await fetch('/api/20250120_card-game01/rooms')
+        if (!response.ok) {
+          throw new Error('Rooms fetch failed')
+        }
+        const payload = await response.json()
+        const list = Array.isArray(payload?.rooms) ? (payload.rooms as RoomSummary[]) : []
+        if (active) {
+          setRooms(list)
+          setRoomsErrorKey(null)
+        }
+      } catch (error) {
+        if (active) {
+          setRoomsErrorKey('lobby.error.fetch')
+        }
+      } finally {
+        if (active) {
+          setRoomsLoading(false)
+        }
+      }
+    }
+
+    fetchRooms()
+    const intervalId = window.setInterval(fetchRooms, 4000)
+
+    return () => {
+      active = false
+      window.clearInterval(intervalId)
+    }
+  }, [route.name])
+
   const resetSession = () => {
     setPlayerInfo({ roomId: '', playerName: '', playerId: '', opponentId: '' })
     setRoomState(null)
@@ -129,17 +175,20 @@ function MyApp() {
     pendingMessageRef.current = null
   }
 
-  const navigateToEntry = (options?: { preserveEntryError?: boolean }) => {
+  const navigateToEntry = (options?: { preserveLobbyError?: boolean }) => {
     setRoute({ name: 'entry' })
     resetSession()
-    if (!options?.preserveEntryError) {
-      setEntryErrorKey(null)
+    if (!options?.preserveLobbyError) {
+      setLobbyErrorKey(null)
     }
   }
 
-  const navigateToCreate = () => {
-    setRoute({ name: 'create' })
-    setEntryErrorKey(null)
+  const navigateToLobby = (options?: { preserveLobbyError?: boolean }) => {
+    setRoute({ name: 'lobby' })
+    resetSession()
+    if (!options?.preserveLobbyError) {
+      setLobbyErrorKey(null)
+    }
   }
 
   const navigateToMatch = (roomId: string) => {
@@ -171,7 +220,7 @@ function MyApp() {
       const playerId = message.payload?.playerId || ''
       const isBotRoom = pendingBotRef.current
       setPlayerInfo((prev) => ({ ...prev, roomId, playerId }))
-      setEntryErrorKey(null)
+      setLobbyErrorKey(null)
       pendingJoinRef.current = false
       pendingBotRef.current = false
       if (roomId) {
@@ -188,7 +237,7 @@ function MyApp() {
       const roomId = message.payload?.roomId || ''
       const playerId = message.payload?.playerId || ''
       setPlayerInfo((prev) => ({ ...prev, roomId, playerId }))
-      setEntryErrorKey(null)
+      setLobbyErrorKey(null)
       pendingJoinRef.current = false
       pendingBotRef.current = false
       if (roomId) {
@@ -199,12 +248,21 @@ function MyApp() {
 
     if (message.type === 'error') {
       const errorMessage = message.payload?.message
-      if (pendingJoinRef.current) {
-        pendingJoinRef.current = false
+      const wasPendingJoin = pendingJoinRef.current
+      pendingJoinRef.current = false
+      pendingBotRef.current = false
+
+      if (wasPendingJoin) {
+        let nextErrorKey: MessageKey | null = 'lobby.error.generic'
         if (errorMessage === 'Room not found.') {
-          setEntryErrorKey('entry.error.room_not_found')
-          navigateToEntry({ preserveEntryError: true })
+          nextErrorKey = 'lobby.error.room_not_found'
+        } else if (errorMessage === 'Room is full.') {
+          nextErrorKey = 'lobby.error.room_full'
+        } else if (errorMessage === 'Room already finished.') {
+          nextErrorKey = 'lobby.error.room_finished'
         }
+        setLobbyErrorKey(nextErrorKey)
+        navigateToLobby({ preserveLobbyError: true })
       }
       return
     }
@@ -342,6 +400,58 @@ function MyApp() {
     navigateToMatch(playerInfo.roomId)
   }
 
+  const buildGuestName = () => `${t('player.guest')}${Math.floor(100 + Math.random() * 900)}`
+
+  const handleEntryBotMatch = () => {
+    const playerName = buildGuestName()
+    setDraftName(playerName)
+    setPlayerInfo({
+      roomId: '',
+      playerName,
+      playerId: '',
+      opponentId: '',
+    })
+    pendingBotRef.current = true
+    sendMessage({ type: 'create_room_bot', payload: { playerName } })
+  }
+
+  const handleLobbyCreate = ({ playerName }: { playerName: string }) => {
+    setDraftName(playerName)
+    setPlayerInfo({
+      roomId: '',
+      playerName,
+      playerId: '',
+      opponentId: '',
+    })
+    pendingBotRef.current = false
+    sendMessage({ type: 'create_room', payload: { playerName } })
+  }
+
+  const handleLobbyCreateBot = ({ playerName }: { playerName: string }) => {
+    setDraftName(playerName)
+    setPlayerInfo({
+      roomId: '',
+      playerName,
+      playerId: '',
+      opponentId: '',
+    })
+    pendingBotRef.current = true
+    sendMessage({ type: 'create_room_bot', payload: { playerName } })
+  }
+
+  const handleLobbyJoin = ({ roomId, playerName }: { roomId: string; playerName: string }) => {
+    setLobbyErrorKey(null)
+    pendingJoinRef.current = true
+    setDraftName(playerName)
+    setPlayerInfo({
+      roomId,
+      playerName,
+      playerId: '',
+      opponentId: '',
+    })
+    sendMessage({ type: 'join_room', payload: { roomId, playerName } })
+  }
+
   const playerIndex = roomState?.players.findIndex((player) => player.playerId === playerInfo.playerId)
   const playerSide = playerIndex === 0 ? 'p1' : playerIndex === 1 ? 'p2' : null
 
@@ -349,7 +459,7 @@ function MyApp() {
     <div className="app">
       <div className="app__topbar">
         {route.name === 'battle' ? (
-          <button className="app__toggle" type="button" onClick={() => navigateToEntry()}>
+          <button className="app__toggle" type="button" onClick={() => navigateToLobby()}>
             {t('battle.back')}
           </button>
         ) : null}
@@ -371,48 +481,22 @@ function MyApp() {
         </button>
       </div>
       {route.name === 'entry' ? (
-        <EntryPage
-          t={t}
-          onCreate={navigateToCreate}
-          serverErrorKey={entryErrorKey}
-          onClearServerError={() => setEntryErrorKey(null)}
-          onJoin={({ roomId, playerName }) => {
-            setEntryErrorKey(null)
-            pendingJoinRef.current = true
-            setPlayerInfo({
-              roomId,
-              playerName,
-              playerId: '',
-              opponentId: '',
-            })
-            sendMessage({ type: 'join_room', payload: { roomId, playerName } })
-          }}
-        />
+        <EntryPage t={t} onHumanMatch={() => navigateToLobby()} onBotMatch={handleEntryBotMatch} />
       ) : null}
-      {route.name === 'create' ? (
-        <CreateRoomPage
+      {route.name === 'lobby' ? (
+        <LobbyPage
           t={t}
+          rooms={rooms}
+          loading={roomsLoading}
+          roomsErrorKey={roomsErrorKey}
+          joinErrorKey={lobbyErrorKey}
+          onClearJoinError={() => setLobbyErrorKey(null)}
+          playerName={draftName}
+          onPlayerNameChange={setDraftName}
+          onCreateRoom={handleLobbyCreate}
+          onCreateBot={handleLobbyCreateBot}
+          onJoinRoom={handleLobbyJoin}
           onBack={navigateToEntry}
-          onCreate={({ playerName }) => {
-            setPlayerInfo({
-              roomId: '',
-              playerName,
-              playerId: '',
-              opponentId: '',
-            })
-            pendingBotRef.current = false
-            sendMessage({ type: 'create_room', payload: { playerName } })
-          }}
-          onCreateBot={({ playerName }) => {
-            setPlayerInfo({
-              roomId: '',
-              playerName,
-              playerId: '',
-              opponentId: '',
-            })
-            pendingBotRef.current = true
-            sendMessage({ type: 'create_room_bot', payload: { playerName } })
-          }}
         />
       ) : null}
       {route.name === 'match' ? (
@@ -423,7 +507,7 @@ function MyApp() {
           playerId={playerInfo.playerId}
           status={roomState?.status}
           playersCount={roomState?.players.length}
-          onBack={navigateToEntry}
+          onBack={navigateToLobby}
         />
       ) : null}
       {route.name === 'battle' ? (
@@ -444,7 +528,7 @@ function MyApp() {
           playerSide={playerSide}
           gameOver={gameOver}
           onRematch={handleRematch}
-          onBack={navigateToEntry}
+          onBack={navigateToLobby}
         />
       ) : null}
     </div>
