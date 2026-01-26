@@ -12,10 +12,23 @@ export const registerCardGame01 = ({ app, server }) => {
 
   app.use(CARD_GAME01_PREFIX, router)
 
-  const wss = new WebSocketServer({
-    server,
-    path: `${CARD_GAME01_PREFIX}/ws`,
-  })
+  const wss = new WebSocketServer({ noServer: true })
+  const wsPath = `${CARD_GAME01_PREFIX}/ws`
+
+  const handleUpgrade = (req, socket, head) => {
+    if (!req.url) {
+      return
+    }
+    const { pathname } = new URL(req.url, 'http://localhost')
+    if (pathname !== wsPath) {
+      return
+    }
+    wss.handleUpgrade(req, socket, head, (client) => {
+      wss.emit('connection', client, req)
+    })
+  }
+
+  server.on('upgrade', handleUpgrade)
 
   const rooms = new Map()
   const ACTIONS = new Set(['attack', 'defend', 'rest'])
