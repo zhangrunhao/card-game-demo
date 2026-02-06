@@ -4,15 +4,17 @@ import { pathToFileURL } from 'node:url'
 import COS from 'cos-nodejs-sdk-v5'
 import mime from 'mime-types'
 
-const {
-  COS_SECRET_ID,
-  COS_SECRET_KEY,
-  COS_BUCKET,
-  COS_REGION,
-  COS_PREFIX = '',
-  BUILD_DIR = 'dist',
-  CDN_BASE_URL = '',
-} = process.env
+const { COS_SECRET_ID, COS_SECRET_KEY } = process.env
+
+export const CONFIG = {
+  COS_BUCKET: 'your-bucket',
+  COS_REGION: 'ap-guangzhou',
+  COS_PREFIX: 'static/site',
+  BUILD_DIR: 'dist/20250122_website',
+  CDN_BASE_URL: 'https://cdn.example.com',
+}
+
+const { COS_BUCKET, COS_REGION, COS_PREFIX, BUILD_DIR, CDN_BASE_URL } = CONFIG
 
 export const toPosix = (value) => value.split(path.sep).join('/').replace(/\\/g, '/')
 

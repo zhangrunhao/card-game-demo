@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { cacheControlForKey, joinCosKey, toPosix } from './deploy-static.mjs'
+import { cacheControlForKey, joinCosKey, toPosix, CONFIG } from './deploy-static.mjs'
 
 test('cacheControlForKey returns no-cache for html', () => {
   assert.equal(cacheControlForKey('index.html'), 'no-cache')
@@ -21,4 +21,12 @@ test('toPosix normalizes separators', () => {
 test('joinCosKey prefixes and normalizes', () => {
   assert.equal(joinCosKey('static/site/', 'a/b.js'), 'static/site/a/b.js')
   assert.equal(joinCosKey('static/site', 'a/b.js'), 'static/site/a/b.js')
+})
+
+test('CONFIG uses hardcoded defaults', () => {
+  assert.equal(CONFIG.COS_BUCKET, 'your-bucket')
+  assert.equal(CONFIG.COS_REGION, 'ap-guangzhou')
+  assert.equal(CONFIG.COS_PREFIX, 'static/site')
+  assert.equal(CONFIG.BUILD_DIR, 'dist/20250122_website')
+  assert.equal(CONFIG.CDN_BASE_URL, 'https://cdn.example.com')
 })
