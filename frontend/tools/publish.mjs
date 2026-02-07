@@ -22,8 +22,7 @@ const usage = () => {
   const available = projects.length ? projects.join(', ') : 'none'
   console.log('Usage: npm run publish <project-name>')
   console.log(`Available projects: ${available}`)
-  console.log('Publish flow: build -> rsync dist/<project>/ to server')
-  console.log('Rsync target: root@101.200.185.29:/var/www/zhangrh.shop/<project>/')
+  console.log('Publish flow: git pull -> build -> upload to 101.200.185.29')
 }
 
 const parseProjectFromNpm = (command) => {
@@ -100,11 +99,4 @@ const run = (commandName, args, options) => {
 
 run('git', ['pull'], { cwd: repoRoot })
 run(process.platform === 'win32' ? 'npm.cmd' : 'npm', ['run', 'build', '--', project], { cwd })
-run(
-  process.platform === 'win32' ? 'npm.cmd' : 'npm',
-  ['run', 'deploy'],
-  {
-    cwd,
-    env: { ...process.env, DEPLOY_PROJECT: project },
-  },
-)
+run(process.execPath, [path.join(cwd, 'scripts', 'deploy-static.mjs'), project], { cwd })
