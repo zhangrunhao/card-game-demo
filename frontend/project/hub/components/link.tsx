@@ -12,7 +12,11 @@ export const Link = ({
   className?: string;
   ariaLabel?: string;
 }) => {
-  const isExternal = to.startsWith("http://") || to.startsWith("https://");
+  const isExternal =
+    to.startsWith("http://") ||
+    to.startsWith("https://") ||
+    to.startsWith("mailto:") ||
+    to.startsWith("tel:");
   if (isExternal) {
     return (
       <a

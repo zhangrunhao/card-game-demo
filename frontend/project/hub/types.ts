@@ -1,10 +1,12 @@
-export type Post = {
-  id: string;
+export type ProductStatus = "Active" | "Shipped";
+export type ProductCategory = "游戏" | "健康";
+
+export type ProductMockCover = {
   title: string;
-  date: string;
-  summary: string;
-  content: string;
-  html: string;
+  subtitle: string;
+  from: string;
+  to: string;
+  accent: string;
 };
 
 export type Product = {
@@ -13,5 +15,11 @@ export type Product = {
   summary: string;
   description: string;
   url: string;
-  cover: string;
+  cover?: string;
+  mockCover?: ProductMockCover;
+  category: ProductCategory;
+  status: ProductStatus;
+  version: string;
+  lastUpdated: string;
+  lastUpdatedLabel: string;
 };

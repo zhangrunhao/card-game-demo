@@ -3,15 +3,15 @@ import type { Post } from "../types";
 import { Link } from "./link";
 
 export const PostList = ({ posts }: { posts: Post[] }) => (
-  <div>
+  <div className="space-y-2">
     {posts.map((post) => (
       <Link
         key={post.id}
         to={`/blogs/${post.id}`}
-        className="flex flex-col space-y-1 mb-4"
+        className="block rounded-xl border border-transparent px-3 py-3 transition-colors hover:border-neutral-200 hover:bg-white"
       >
-        <div className="w-full flex flex-col md:flex-row space-x-0 md:space-x-2">
-          <p className="text-neutral-600 w-[120px] tabular-nums">
+        <div className="flex w-full flex-col gap-1 md:flex-row md:items-center md:gap-3">
+          <p className="w-[120px] text-sm tabular-nums text-neutral-500">
             {formatDate(post.date)}
           </p>
           <p className="text-neutral-900 tracking-tight">{post.title}</p>
