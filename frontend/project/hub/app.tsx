@@ -42,24 +42,34 @@ const HOME_AREAS = [
     title: "产品",
     description: "已上线且持续迭代",
     icon: "product",
-    iconClassName: "bg-emerald-100 text-emerald-700",
-    className: "border border-[#e5e5e5] bg-white",
+    iconClassName: "bg-emerald-100 text-emerald-600",
+    hoverIconClassName: "group-hover:bg-emerald-600 group-hover:text-white",
+    cardClassName: "border border-[#e5e5e5] bg-white",
+    hoverBorderClassName: "hover:border-emerald-500",
+    hoverArrowClassName: "group-hover:text-emerald-600",
   },
   {
     to: "/ideas",
     title: "想法",
     description: "想法、实验和原型",
     icon: "idea",
-    iconClassName: "bg-amber-100 text-amber-700",
-    className: "border-2 border-[#d4d4d4] bg-[rgba(255,251,235,0.3)]",
+    iconClassName: "bg-amber-100 text-amber-600",
+    hoverIconClassName: "group-hover:bg-amber-600 group-hover:text-white",
+    cardClassName:
+      "border-2 border-dashed border-[#d4d4d4] bg-[rgba(255,251,235,0.3)]",
+    hoverBorderClassName: "hover:border-amber-400",
+    hoverArrowClassName: "group-hover:text-amber-600",
   },
   {
     to: "/reviews",
     title: "复盘",
     description: "每次发版的思考",
     icon: "review",
-    iconClassName: "bg-blue-100 text-blue-700",
-    className: "border border-[#e5e5e5] bg-white",
+    iconClassName: "bg-blue-100 text-blue-600",
+    hoverIconClassName: "group-hover:bg-blue-600 group-hover:text-white",
+    cardClassName: "border border-[#e5e5e5] bg-white",
+    hoverBorderClassName: "hover:border-blue-500",
+    hoverArrowClassName: "group-hover:text-blue-600",
   },
 ] as const;
 
@@ -477,59 +487,12 @@ const ProductCard = ({ product }: { product: Product }) => (
   </article>
 );
 
-const HomeReviewCard = ({ item }: { item: Review }) => {
+const ReviewCard = ({ item }: { item: Review }) => {
   const summaryOne = item.dataChanges[0] ?? "-";
   const summaryTwo = item.dataChanges[1] ?? "-";
 
   return (
-    <article className="rounded-2xl border border-[#e5e5e5] bg-white p-5 shadow-[inset_3px_0_0_0_#3b82f6]">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-[#737373]">
-        <span className="rounded bg-[#f5f5f5] px-2 py-0.5 text-[#404040]">
-          {item.productName}
-        </span>
-        <span className="rounded bg-blue-50 px-2 py-0.5 text-blue-700">
-          {item.version}
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <CalendarIcon />
-          {formatDateMonthDay(item.publishDate)}
-        </span>
-      </div>
-
-      <h3 className="mt-3 text-[18px] font-semibold leading-[24.75px] tracking-[-0.02em] text-[#171717]">
-        {item.headline}
-      </h3>
-
-      <div className="mt-3 grid gap-4 text-xs leading-[19.5px] text-[#404040] md:grid-cols-3">
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#009966]">
-            数据变化
-          </p>
-          <p>{summaryOne}</p>
-        </div>
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-blue-600">
-            影响
-          </p>
-          <p>{summaryTwo}</p>
-        </div>
-        <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-orange-500">
-            下一步
-          </p>
-          <p>{item.nextPlan}</p>
-        </div>
-      </div>
-    </article>
-  );
-};
-
-const ReviewListCard = ({ item }: { item: Review }) => {
-  const summaryOne = item.dataChanges[0] ?? "-";
-  const summaryTwo = item.dataChanges[1] ?? "-";
-
-  return (
-    <article className="rounded-r-2xl border border-[#e5e5e5] border-l-4 border-l-[#2b7fff] bg-white px-5 pb-4 pt-5 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.1)]">
+    <article className="group rounded-r-2xl border border-[#e5e5e5] border-l-4 border-l-[#2b7fff] bg-white px-5 pb-4 pt-5 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.1)] transition-all duration-200 hover:bg-blue-50/30 hover:shadow-[0px_4px_12px_rgba(0,0,0,0.08),0px_2px_6px_rgba(0,0,0,0.04)]">
       <div className="flex flex-wrap items-center gap-2 text-xs text-[#737373]">
         <span className="inline-flex items-center gap-1 rounded bg-[#f5f5f5] px-2 py-1 text-[#404040]">
           <ProductMarkIcon />
@@ -545,24 +508,24 @@ const ReviewListCard = ({ item }: { item: Review }) => {
         </span>
       </div>
 
-      <h3 className="mt-3 text-[18px] font-semibold leading-[24.75px] tracking-[-0.4395px] text-[#171717]">
+      <h3 className="mt-3 text-[18px] font-semibold leading-[24.75px] tracking-[-0.4395px] text-[#171717] transition-colors duration-200 group-hover:text-blue-600">
         {item.headline}
       </h3>
 
       <div className="mt-3 grid gap-3 text-xs leading-[19.5px] text-[#404040] md:grid-cols-3">
-        <div>
+        <div className="rounded-lg px-2 py-1 transition-colors duration-200 group-hover:bg-white/70">
           <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#009966]">
             做了什么
           </p>
           <p>{summaryOne}</p>
         </div>
-        <div>
+        <div className="rounded-lg px-2 py-1 transition-colors duration-200 group-hover:bg-white/70">
           <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#155dfc]">
             影响
           </p>
           <p>{summaryTwo}</p>
         </div>
-        <div>
+        <div className="rounded-lg px-2 py-1 transition-colors duration-200 group-hover:bg-white/70">
           <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#e17100]">
             下一步
           </p>
@@ -625,15 +588,17 @@ const HomePage = () => {
             <Link
               key={item.to}
               to={item.to}
-              className={`group rounded-2xl px-6 pb-6 pt-6 transition hover:-translate-y-0.5 ${item.className}`}
+              className={`group rounded-2xl border p-6 transition-all duration-200 hover:shadow-[0px_4px_12px_rgba(0,0,0,0.08),0px_2px_6px_rgba(0,0,0,0.04)] ${item.cardClassName} ${item.hoverBorderClassName}`}
             >
               <div className="mb-4 flex items-start justify-between">
                 <span
-                  className={`inline-flex size-10 items-center justify-center rounded-xl ${item.iconClassName}`}
+                  className={`inline-flex size-10 items-center justify-center rounded-xl transition-colors duration-200 ${item.iconClassName} ${item.hoverIconClassName}`}
                 >
                   <AreaIcon icon={item.icon} />
                 </span>
-                <span className="text-neutral-400 transition group-hover:text-neutral-600">
+                <span
+                  className={`text-neutral-400 transition-all duration-200 group-hover:translate-x-0.5 ${item.hoverArrowClassName}`}
+                >
                   <ArrowIcon className="size-4" />
                 </span>
               </div>
@@ -667,7 +632,7 @@ const HomePage = () => {
         />
         <div className="mt-6 space-y-4">
           {latestReviews.map((item) => (
-            <HomeReviewCard key={item.id} item={item} />
+            <ReviewCard key={item.id} item={item} />
           ))}
         </div>
       </div>
@@ -836,7 +801,7 @@ const ReviewsPage = () => {
 
         <div className="flex flex-col gap-4">
           {reviews.map((item) => (
-            <ReviewListCard key={item.id} item={item} />
+            <ReviewCard key={item.id} item={item} />
           ))}
         </div>
       </div>
