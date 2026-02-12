@@ -3,6 +3,7 @@
     "id": "task-studio-v2-3-1",
     "productName": "Task Studio",
     "version": "v2.3.1",
+    "headline": "Task Studio v2.3.1 - 重构时间追踪器",
     "publishDate": "2026-02-05",
     "dataChanges": [
       "重构了时间追踪器的底层逻辑，优化了性能和数据准确性",
@@ -14,6 +15,7 @@
     "id": "moment-log-v1-5-2",
     "productName": "Moment Log",
     "version": "v1.5.2",
+    "headline": "Moment Log v1.5.2 - 新增语音记录",
     "publishDate": "2026-01-28",
     "dataChanges": [
       "新增语音记录功能，支持语音转文字",
@@ -25,11 +27,24 @@
     "id": "task-studio-v2-2-0",
     "productName": "Task Studio",
     "version": "v2.2.0",
+    "headline": "Task Studio v2.2.0 - 看板拖拽优化",
     "publishDate": "2026-01-15",
     "dataChanges": [
       "优化了看板的拖拽交互，支持批量操作",
       "任务整理效率提升，用户每天平均节省 5 分钟"
     ],
     "nextPlan": "收集用户对时间追踪器的反馈，准备下一版本优化。"
+  },
+  {
+    "id": "palette-ai-v1-0-0",
+    "productName": "Palette AI",
+    "version": "v1.0.0",
+    "headline": "Palette AI v1.0.0 - 正式发布",
+    "publishDate": "2025-12-15",
+    "dataChanges": [
+      "AI 配色生成器正式发布，支持自然语言输入",
+      "24 小时内获得 500+ 用户注册，产品Hunt 获得 200+ upvotes"
+    ],
+    "nextPlan": "收集用户反馈，优化 AI 模型和导出功能。"
   }
 ]

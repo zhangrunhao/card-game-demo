@@ -84,7 +84,10 @@ const resolveRoute = (pathname: string): Route => {
 
   const productDetailMatch = path.match(/^\/products\/([^/]+)$/);
   if (productDetailMatch?.[1]) {
-    return { name: "product-detail", productId: decodeURIComponent(productDetailMatch[1]) };
+    return {
+      name: "product-detail",
+      productId: decodeURIComponent(productDetailMatch[1]),
+    };
   }
 
   return { name: "not-found" };
@@ -108,6 +111,14 @@ const formatDateMonthDay = (value: string) => {
     return value;
   }
   return `${date.getMonth() + 1}/${date.getDate()}`;
+};
+
+const formatDateYmd = (value: string) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+  return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()}`;
 };
 
 const formatDateFull = (value: string) => {
@@ -149,7 +160,12 @@ const CalendarIcon = () => (
 );
 
 const ArrowIcon = ({ className }: { className?: string }) => (
-  <svg className={className ?? "size-3.5"} viewBox="0 0 16 16" fill="none" aria-hidden>
+  <svg
+    className={className ?? "size-3.5"}
+    viewBox="0 0 16 16"
+    fill="none"
+    aria-hidden
+  >
     <path
       d="M3.5 8H12.5M12.5 8L9 4.5M12.5 8L9 11.5"
       stroke="currentColor"
@@ -202,6 +218,25 @@ const ExternalIcon = () => (
       d="M10 3H13V6M13 3L8 8M6 4H4.5C3.67157 4 3 4.67157 3 5.5V11.5C3 12.3284 3.67157 13 4.5 13H10.5C11.3284 13 12 12.3284 12 11.5V10"
       stroke="currentColor"
       strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
+const ProductMarkIcon = () => (
+  <svg className="size-[11px]" viewBox="0 0 24 24" fill="none" aria-hidden>
+    <path
+      d="M8.5 12C8.5 9.8 10.3 8 12.5 8H16.5C18.7 8 20.5 9.8 20.5 12C20.5 14.2 18.7 16 16.5 16H12.5"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M15.5 12C15.5 14.2 13.7 16 11.5 16H7.5C5.3 16 3.5 14.2 3.5 12C3.5 9.8 5.3 8 7.5 8H11.5"
+      stroke="currentColor"
+      strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
@@ -372,8 +407,12 @@ const SectionTitle = ({
 }) => (
   <div className="flex items-end justify-between gap-4">
     <div>
-      <h2 className="text-[24px] font-medium leading-8 tracking-[0.0703px] text-[#171717]">{title}</h2>
-      <p className="mt-1 text-base leading-6 tracking-[-0.3125px] text-[#525252]">{subtitle}</p>
+      <h2 className="text-[24px] font-medium leading-8 tracking-[0.0703px] text-[#171717]">
+        {title}
+      </h2>
+      <p className="mt-1 text-base leading-6 tracking-[-0.3125px] text-[#525252]">
+        {subtitle}
+      </p>
     </div>
     {action ? (
       <Link
@@ -438,15 +477,19 @@ const ProductCard = ({ product }: { product: Product }) => (
   </article>
 );
 
-const ReviewCard = ({ item }: { item: Review }) => {
+const HomeReviewCard = ({ item }: { item: Review }) => {
   const summaryOne = item.dataChanges[0] ?? "-";
   const summaryTwo = item.dataChanges[1] ?? "-";
 
   return (
     <article className="rounded-2xl border border-[#e5e5e5] bg-white p-5 shadow-[inset_3px_0_0_0_#3b82f6]">
       <div className="flex flex-wrap items-center gap-2 text-xs text-[#737373]">
-        <span className="rounded bg-[#f5f5f5] px-2 py-0.5 text-[#404040]">{item.productName}</span>
-        <span className="rounded bg-blue-50 px-2 py-0.5 text-blue-700">{item.version}</span>
+        <span className="rounded bg-[#f5f5f5] px-2 py-0.5 text-[#404040]">
+          {item.productName}
+        </span>
+        <span className="rounded bg-blue-50 px-2 py-0.5 text-blue-700">
+          {item.version}
+        </span>
         <span className="inline-flex items-center gap-1">
           <CalendarIcon />
           {formatDateMonthDay(item.publishDate)}
@@ -454,20 +497,75 @@ const ReviewCard = ({ item }: { item: Review }) => {
       </div>
 
       <h3 className="mt-3 text-[18px] font-semibold leading-[24.75px] tracking-[-0.02em] text-[#171717]">
-        {item.productName} {item.version} - 数据复盘
+        {item.headline}
       </h3>
 
       <div className="mt-3 grid gap-4 text-xs leading-[19.5px] text-[#404040] md:grid-cols-3">
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#009966]">数据变化</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#009966]">
+            数据变化
+          </p>
           <p>{summaryOne}</p>
         </div>
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-blue-600">影响</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-blue-600">
+            影响
+          </p>
           <p>{summaryTwo}</p>
         </div>
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-orange-500">下一步</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-orange-500">
+            下一步
+          </p>
+          <p>{item.nextPlan}</p>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const ReviewListCard = ({ item }: { item: Review }) => {
+  const summaryOne = item.dataChanges[0] ?? "-";
+  const summaryTwo = item.dataChanges[1] ?? "-";
+
+  return (
+    <article className="rounded-r-2xl border border-[#e5e5e5] border-l-4 border-l-[#2b7fff] bg-white px-5 pb-4 pt-5 shadow-[0px_1px_3px_0px_rgba(0,0,0,0.1),0px_1px_2px_0px_rgba(0,0,0,0.1)]">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-[#737373]">
+        <span className="inline-flex items-center gap-1 rounded bg-[#f5f5f5] px-2 py-1 text-[#404040]">
+          <ProductMarkIcon />
+          {item.productName}
+        </span>
+        <span className="rounded border border-[#bedbff] bg-[#dbeafe] px-2 py-0.5 text-[#1447e6]">
+          {item.version}
+        </span>
+        <span className="text-[#a1a1a1]">·</span>
+        <span className="inline-flex items-center gap-1 text-[#737373]">
+          <CalendarIcon />
+          {formatDateMonthDay(item.publishDate)}
+        </span>
+      </div>
+
+      <h3 className="mt-3 text-[18px] font-semibold leading-[24.75px] tracking-[-0.4395px] text-[#171717]">
+        {item.headline}
+      </h3>
+
+      <div className="mt-3 grid gap-3 text-xs leading-[19.5px] text-[#404040] md:grid-cols-3">
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#009966]">
+            做了什么
+          </p>
+          <p>{summaryOne}</p>
+        </div>
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#155dfc]">
+            影响
+          </p>
+          <p>{summaryTwo}</p>
+        </div>
+        <div>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.3px] text-[#e17100]">
+            下一步
+          </p>
           <p>{item.nextPlan}</p>
         </div>
       </div>
@@ -518,7 +616,10 @@ const HomePage = () => {
       </div>
 
       <div className="border-b border-[#e5e5e5] pb-20 pt-20">
-        <SectionTitle title="三个专区" subtitle="不同阶段的内容，统一的品质追求" />
+        <SectionTitle
+          title="三个专区"
+          subtitle="不同阶段的内容，统一的品质追求"
+        />
         <div className="mt-6 grid gap-5 md:grid-cols-3">
           {HOME_AREAS.map((item) => (
             <Link
@@ -566,7 +667,7 @@ const HomePage = () => {
         />
         <div className="mt-6 space-y-4">
           {latestReviews.map((item) => (
-            <ReviewCard key={item.id} item={item} />
+            <HomeReviewCard key={item.id} item={item} />
           ))}
         </div>
       </div>
@@ -583,7 +684,9 @@ const ProductsPage = () => {
   return (
     <section className="space-y-6 pb-14 pt-8">
       <div>
-        <h1 className="text-[36px] font-semibold leading-[40px] tracking-[-0.03em] text-[#171717]">产品</h1>
+        <h1 className="text-[36px] font-semibold leading-[40px] tracking-[-0.03em] text-[#171717]">
+          产品
+        </h1>
         <p className="mt-3 text-base text-[#525252]">已上线且持续迭代的项目</p>
       </div>
 
@@ -619,7 +722,10 @@ const ProductDetailPage = ({ productId }: { productId: string }) => {
   return (
     <section className="space-y-6 pb-14 pt-8">
       <div>
-        <Link to="/products" className="inline-flex items-center gap-1 text-sm font-medium text-[#525252]">
+        <Link
+          to="/products"
+          className="inline-flex items-center gap-1 text-sm font-medium text-[#525252]"
+        >
           <ArrowIcon />
           返回产品列表
         </Link>
@@ -627,12 +733,18 @@ const ProductDetailPage = ({ productId }: { productId: string }) => {
 
       <article className="overflow-hidden rounded-2xl border border-[#e5e5e5] bg-white">
         <div className="h-[420px] w-full overflow-hidden bg-neutral-100">
-          <img src={resolveImageUrl(product.coverImage)} alt={product.name} className="h-full w-full object-cover" />
+          <img
+            src={resolveImageUrl(product.coverImage)}
+            alt={product.name}
+            className="h-full w-full object-cover"
+          />
         </div>
 
         <div className="space-y-4 px-6 py-6">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-3xl font-semibold tracking-tight text-[#171717]">{product.name}</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-[#171717]">
+              {product.name}
+            </h1>
             <ProductStatusBadge status={product.status} />
           </div>
 
@@ -641,7 +753,9 @@ const ProductDetailPage = ({ productId }: { productId: string }) => {
           <div className="grid gap-3 rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-700 sm:grid-cols-2">
             <div>
               <p className="text-xs text-neutral-500">当前版本</p>
-              <p className="mt-1 font-medium text-neutral-900">{product.currentVersion}</p>
+              <p className="mt-1 font-medium text-neutral-900">
+                {product.currentVersion}
+              </p>
             </div>
             <div>
               <p className="text-xs text-neutral-500">版本提交日期</p>
@@ -657,49 +771,74 @@ const ProductDetailPage = ({ productId }: { productId: string }) => {
 };
 
 const IdeasPage = () => {
-  const ideas = useMemo(() => sortByDateDesc(IDEAS, (item) => item.ideaDate), []);
+  const ideas = useMemo(
+    () => sortByDateDesc(IDEAS, (item) => item.ideaDate),
+    [],
+  );
 
   return (
-    <section className="space-y-6 pb-14 pt-8">
-      <div>
-        <h1 className="text-[36px] font-semibold leading-[40px] tracking-[-0.03em] text-[#171717]">想法</h1>
-        <p className="mt-3 text-base text-[#525252]">想法、实验和原型，还在探索中的创意</p>
-      </div>
+    <section className="pb-14 pt-16">
+      <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-[36px] font-medium leading-[40px] tracking-[-0.5309px] text-[#171717]">
+            想法
+          </h1>
+          <p className="text-base leading-[26px] tracking-[-0.3125px] text-[#525252]">
+            想法、实验和原型 · 还在探索中的创意
+          </p>
+        </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {ideas.map((idea) => (
-          <article key={idea.id} className="rounded-2xl border border-[#e5e5e5] bg-white p-5">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-[18px] font-semibold leading-[24.75px] tracking-[-0.02em] text-[#171717]">
-                {idea.name}
-              </h2>
-              <span className="inline-flex items-center gap-1 text-xs text-[#737373]">
-                <CalendarIcon />
-                {formatDateMonthDay(idea.ideaDate)}
-              </span>
-            </div>
-            <p className="mt-2 text-sm leading-6 text-[#525252]">{idea.summary}</p>
-          </article>
-        ))}
+        <div className="flex flex-col gap-4">
+          {ideas.map((idea) => (
+            <article
+              key={idea.id}
+              className="h-[95.5px] rounded-2xl border-2 border-[#d4d4d4] bg-[linear-gradient(175deg,rgba(255,251,235,0.4)_0%,#ffffff_100%)] px-[22px] pb-[2px] pt-[22px]"
+            >
+              <div className="flex h-[51.5px] items-center justify-between">
+                <div className="min-w-0">
+                  <h2 className="text-[18px] font-semibold leading-[24.75px] tracking-[-0.4395px] text-[#171717]">
+                    {idea.name}
+                  </h2>
+                  <p className="mt-1 text-sm leading-[22.75px] tracking-[-0.1504px] text-[#525252]">
+                    {idea.summary}
+                  </p>
+                </div>
+                <div className="ml-4 inline-flex items-center gap-1.5 text-xs text-[#737373]">
+                  <CalendarIcon />
+                  {formatDateYmd(idea.ideaDate)}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );
 };
 
 const ReviewsPage = () => {
-  const reviews = useMemo(() => sortByDateDesc(REVIEWS, (item) => item.publishDate), []);
+  const reviews = useMemo(
+    () => sortByDateDesc(REVIEWS, (item) => item.publishDate),
+    [],
+  );
 
   return (
-    <section className="space-y-6 pb-14 pt-8">
-      <div>
-        <h1 className="text-[36px] font-semibold leading-[40px] tracking-[-0.03em] text-[#171717]">复盘</h1>
-        <p className="mt-3 text-base text-[#525252]">每次发版的复盘与反思，记录产品迭代的思考过程</p>
-      </div>
+    <section className="mx-auto max-w-[1024px] pb-14 pt-16">
+      <div className="flex flex-col gap-10">
+        <div className="flex flex-col gap-4">
+          <h1 className="text-[36px] font-medium leading-[40px] tracking-[-0.5309px] text-[#171717]">
+            复盘
+          </h1>
+          <p className="text-base leading-[26px] tracking-[-0.3125px] text-[#525252]">
+            每次发版的复盘与反思 · 记录产品迭代的思考过程
+          </p>
+        </div>
 
-      <div className="space-y-4">
-        {reviews.map((item) => (
-          <ReviewCard key={item.id} item={item} />
-        ))}
+        <div className="flex flex-col gap-4">
+          {reviews.map((item) => (
+            <ReviewListCard key={item.id} item={item} />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -708,13 +847,19 @@ const ReviewsPage = () => {
 const AboutPage = () => (
   <section className="space-y-6 pb-14 pt-8">
     <div>
-      <h1 className="text-[36px] font-semibold leading-[40px] tracking-[-0.03em] text-[#171717]">关于</h1>
-      <p className="mt-3 text-base text-[#525252]">个人产品实践者，持续用设计和开发把想法变成可用的产品</p>
+      <h1 className="text-[36px] font-semibold leading-[40px] tracking-[-0.03em] text-[#171717]">
+        关于
+      </h1>
+      <p className="mt-3 text-base text-[#525252]">
+        个人产品实践者，持续用设计和开发把想法变成可用的产品
+      </p>
     </div>
 
     <article className="rounded-2xl border border-[#e5e5e5] bg-white p-6">
       <h2 className="text-2xl font-semibold text-[#171717]">联系方式</h2>
-      <p className="mt-3 text-sm leading-7 text-[#525252]">欢迎交流产品、设计和工程实现。</p>
+      <p className="mt-3 text-sm leading-7 text-[#525252]">
+        欢迎交流产品、设计和工程实现。
+      </p>
 
       <div className="mt-5 flex flex-wrap gap-3">
         <Link
@@ -740,7 +885,9 @@ const AboutPage = () => (
 const NotFoundPage = () => (
   <section className="flex min-h-[50vh] items-center justify-center pb-14 pt-8">
     <div className="rounded-2xl border border-[#e5e5e5] bg-white px-8 py-12 text-center">
-      <p className="text-6xl font-semibold tracking-tight text-[#171717]">404</p>
+      <p className="text-6xl font-semibold tracking-tight text-[#171717]">
+        404
+      </p>
       <p className="mt-2 text-[#525252]">页面不存在</p>
       <div className="mt-5">
         <Link
@@ -760,7 +907,9 @@ const AppFooter = () => (
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
           <h3 className="text-xl font-semibold text-[#171717]">产品实验室</h3>
-          <p className="mt-2 text-sm text-[#525252]">打磨有趣的产品，记录开发过程，分享设计思考</p>
+          <p className="mt-2 text-sm text-[#525252]">
+            打磨有趣的产品，记录开发过程，分享设计思考
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -817,7 +966,9 @@ export const App = () => {
       <main className="mx-auto w-full max-w-[1280px] px-4 md:px-8">
         {route.name === "home" ? <HomePage /> : null}
         {route.name === "products" ? <ProductsPage /> : null}
-        {route.name === "product-detail" ? <ProductDetailPage productId={route.productId} /> : null}
+        {route.name === "product-detail" ? (
+          <ProductDetailPage productId={route.productId} />
+        ) : null}
         {route.name === "ideas" ? <IdeasPage /> : null}
         {route.name === "reviews" ? <ReviewsPage /> : null}
         {route.name === "about" ? <AboutPage /> : null}

@@ -21,6 +21,7 @@ export type Review = {
   id: string;
   productName: string;
   version: string;
+  headline: string;
   publishDate: string;
   dataChanges: string[];
   nextPlan: string;
