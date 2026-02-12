@@ -6,7 +6,4 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url))
 
 export default createProjectConfig({
   projectRoot,
-  entry: {
-    index: path.resolve(projectRoot, './index.html'),
-  },
 })

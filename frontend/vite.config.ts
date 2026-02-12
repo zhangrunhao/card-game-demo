@@ -17,23 +17,12 @@ const sharedConfig = defineConfig({
 
 export const createProjectConfig = ({
   projectRoot,
-  entry,
 }: {
   projectRoot: string
-  entry?: Record<string, string>
 }) => {
   const projectName = path.basename(projectRoot)
-  const htmlInputs = entry
-    ? Object.fromEntries(
-        Object.entries(entry).map(([name, entryPath]) => [name, path.resolve(projectRoot, entryPath)]),
-      )
-    : { index: path.resolve(projectRoot, 'index.html') }
   const distRoot = path.resolve(projectRoot, '../../dist', projectName)
   const basePath = `/${projectName}/`
-
-  if (!htmlInputs.index) {
-    throw new Error(`Missing index.html entry for ${projectRoot}.`)
-  }
 
   return defineConfig(({ command }) =>
     mergeConfig(sharedConfig, {
@@ -44,9 +33,6 @@ export const createProjectConfig = ({
         outDir: distRoot,
         assetsDir: 'static',
         emptyOutDir: true,
-        rollupOptions: {
-          input: { index: htmlInputs.index },
-        },
       },
     }),
   )
