@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { track } from "../../common/track";
 import { Link } from "./components/link";
 import ideasData from "./data/ideas.json";
 import productsData from "./data/products.json";
@@ -12,6 +13,7 @@ const REVIEWS = reviewsData as Review[];
 
 const EMAIL_LINK = "mailto:runhaozhang.dev@gmail.com";
 const GITHUB_LINK = "https://github.com/zhangrunhao";
+const HUB_PROJECT = "hub";
 
 type Route =
   | { name: "home" }
@@ -22,18 +24,63 @@ type Route =
   | { name: "about" }
   | { name: "not-found" };
 
+type HubPageName =
+  | "home"
+  | "products"
+  | "product_detail"
+  | "ideas"
+  | "reviews"
+  | "about"
+  | "not_found";
+
+type HubButton =
+  | "nav_product"
+  | "nav_ideas"
+  | "nav_reviews"
+  | "nav_about"
+  | "main_view_products"
+  | "main_view_reviews";
+
 type NavItem = {
   label: string;
   to: string;
   routeName: Exclude<Route["name"], "not-found" | "product-detail" | "home">;
   icon: "product" | "idea" | "review" | "about";
+  button: Extract<
+    HubButton,
+    "nav_product" | "nav_ideas" | "nav_reviews" | "nav_about"
+  >;
 };
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "产品", to: "/products", routeName: "products", icon: "product" },
-  { label: "想法", to: "/ideas", routeName: "ideas", icon: "idea" },
-  { label: "复盘", to: "/reviews", routeName: "reviews", icon: "review" },
-  { label: "关于", to: "/about", routeName: "about", icon: "about" },
+  {
+    label: "产品",
+    to: "/products",
+    routeName: "products",
+    icon: "product",
+    button: "nav_product",
+  },
+  {
+    label: "想法",
+    to: "/ideas",
+    routeName: "ideas",
+    icon: "idea",
+    button: "nav_ideas",
+  },
+  {
+    label: "复盘",
+    to: "/reviews",
+    routeName: "reviews",
+    icon: "review",
+    button: "nav_reviews",
+  },
+  {
+    label: "关于",
+    to: "/about",
+    routeName: "about",
+    icon: "about",
+    button: "nav_about",
+  },
 ];
 
 const HOME_AREAS = [
@@ -155,6 +202,32 @@ const sortByDateDesc = <T,>(items: T[], getDate: (item: T) => string) => {
   return [...items].sort(
     (a, b) => new Date(getDate(b)).getTime() - new Date(getDate(a)).getTime(),
   );
+};
+
+const resolvePageName = (route: Route): HubPageName => {
+  if (route.name === "product-detail") {
+    return "product_detail";
+  }
+  if (route.name === "not-found") {
+    return "not_found";
+  }
+  return route.name;
+};
+
+const trackHubLoadPage = (pageName: HubPageName) => {
+  track({
+    event: "load_page",
+    project: HUB_PROJECT,
+    params: { page_name: pageName },
+  });
+};
+
+const trackHubClick = (button: HubButton) => {
+  track({
+    event: "click",
+    project: HUB_PROJECT,
+    params: { button },
+  });
 };
 
 const CalendarIcon = () => (
@@ -387,6 +460,7 @@ const AppHeader = ({ routeName }: { routeName: Route["name"] }) => (
             <Link
               key={item.to}
               to={item.to}
+              onClick={() => trackHubClick(item.button)}
               className={`relative inline-flex h-8 items-center gap-1 rounded-xl px-3 text-sm font-medium transition-colors ${
                 active
                   ? "bg-emerald-50 text-[#009966]"
@@ -563,6 +637,7 @@ const HomePage = () => {
         <div className="mt-10 flex flex-wrap gap-4">
           <Link
             to="/products"
+            onClick={() => trackHubClick("main_view_products")}
             className="inline-flex h-[52px] items-center gap-2 rounded-xl bg-[#009966] px-7 text-base font-medium tracking-[-0.3125px] text-white shadow-sm"
           >
             <CubeIcon />
@@ -570,6 +645,7 @@ const HomePage = () => {
           </Link>
           <Link
             to="/reviews"
+            onClick={() => trackHubClick("main_view_reviews")}
             className="inline-flex h-[52px] items-center gap-2 rounded-xl px-7 text-base font-medium tracking-[-0.3125px] text-[#404040]"
           >
             阅读复盘
@@ -923,6 +999,10 @@ export const App = () => {
       "not-found": "404 - 产品实验室",
     };
     document.title = titleMap[route.name];
+  }, [route]);
+
+  useEffect(() => {
+    trackHubLoadPage(resolvePageName(route));
   }, [route]);
 
   return (

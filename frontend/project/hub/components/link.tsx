@@ -6,11 +6,13 @@ export const Link = ({
   children,
   className,
   ariaLabel,
+  onClick,
 }: {
   to: string;
   children: ReactNode;
   className?: string;
   ariaLabel?: string;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }) => {
   const isExternal =
     to.startsWith("http://") ||
@@ -25,6 +27,7 @@ export const Link = ({
         target="_blank"
         rel="noreferrer"
         aria-label={ariaLabel}
+        onClick={onClick}
       >
         {children}
       </a>
@@ -32,6 +35,10 @@ export const Link = ({
   }
   const href = withBase(to);
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    onClick?.(event);
+    if (event.defaultPrevented) {
+      return;
+    }
     event.preventDefault();
     if (window.location.pathname !== href) {
       window.history.pushState({}, "", href);
