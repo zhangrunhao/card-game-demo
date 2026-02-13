@@ -3,7 +3,8 @@
     "id": "card-game",
     "name": "卡牌游戏",
     "summary": "同时出牌, 进行对冲结算的卡牌有戏",
-    "coverImage": "../assets/cardgame.png",
+    "link": "https://zhangrh.shop/cardgame",
+    "coverImage": "https://zhangrunhao.oss-cn-beijing.aliyuncs.com/assets/cardgame.png",
     "currentVersion": "v1.0.0",
     "currentVersionCommitDate": "2026-02-05",
     "status": "active"
@@ -12,7 +13,8 @@
     "id": "calorie-note",
     "name": "卡路里笔记本",
     "summary": "记录每日摄入卡路里, 展示摄入和体重关系变化图",
-    "coverImage": "../assets/calorie.png",
+    "link": "/products/calorie-note",
+    "coverImage": "https://zhangrunhao.oss-cn-beijing.aliyuncs.com/assets/calorie.png",
     "currentVersion": "v1.0.0",
     "currentVersionCommitDate": "2026-02-05",
     "status": "active"

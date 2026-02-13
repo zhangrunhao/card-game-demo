@@ -49,7 +49,7 @@ export const ProductCard = ({ product }: { product: Product }) => (
       </h3>
       <p className="text-sm leading-6 text-[#525252]">{product.summary}</p>
       <Link
-        to={`/products/${product.id}`}
+        to={product.link}
         className="inline-flex items-center gap-1 text-sm font-medium text-[#009966]"
       >
         查看详情

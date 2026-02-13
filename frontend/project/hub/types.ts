@@ -4,6 +4,7 @@ export type Product = {
   id: string;
   name: string;
   summary: string;
+  link: string;
   coverImage: string;
   currentVersion: string;
   currentVersionCommitDate: string;
